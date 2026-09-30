@@ -1,0 +1,63 @@
+================================================================================
+AI LABORATORY: TASK 1 OUTPUT
+Part I: From Probability to Language (Question 1)
+================================================================================
+
+1. MATHEMATICAL FORMULATION:
+Consider the sequence of words:
+    X_1 = "the", X_2 = "cat", X_3 = "sat", X_4 = "on", X_5 = "the", X_6 = "mat"
+
+The complete joint probability of this sequence is P(X_1, X_2, X_3, X_4, X_5, X_6).
+Applying the general chain rule of probability without any independence assumptions yields:
+
+    P(X_1, ..., X_6) = P(X_1)
+                     * P(X_2 | X_1)
+                     * P(X_3 | X_1, X_2)
+                     * P(X_4 | X_1, X_2, X_3)
+                     * P(X_5 | X_1, X_2, X_3, X_4)
+                     * P(X_6 | X_1, X_2, X_3, X_4, X_5)
+
+More generally, for any sequence of length T:
+    P(X_1, ..., X_T) = P(X_1) * prod_{t=2}^T P(X_t | X_1, ..., X_{t-1})
+
+This is known as the AUTOREGRESSIVE DECOMPOSITION.
+
+--------------------------------------------------------------------------------
+2. QUESTION 1 AND DETAILED ANSWER:
+--------------------------------------------------------------------------------
+QUESTION 1:
+"Why is this decomposition useful for generating text? Write a short explanation
+in your lab record."
+
+ANSWER:
+Generating text directly from the joint distribution P(X_1, ..., X_T) is computationally
+intractable. If the vocabulary size is |V| and the sequence length is T, the joint
+sample space contains |V|^T possible sequences. In any realistic language setting,
+almost every possible combination will have an empirical frequency of zero.
+
+The autoregressive decomposition is essential for generating text because:
+
+1. Reduction to Sequential Categorical Sampling:
+   Instead of attempting to pick a full sequence from |V|^T possibilities in a single
+   step, the problem is decomposed into T sequential steps. At each step t, the model
+   only needs to evaluate a 1D categorical distribution over the vocabulary V conditioned
+   on the generated history (x_1, ..., x_{t-1}).
+
+2. Enables Ancestral Forward Sampling:
+   Text generation becomes an iterative left-to-right process:
+     Step 1: Sample x_1 ~ P(X_1)
+     Step 2: Sample x_2 ~ P(X_2 | X_1 = x_1)
+     Step 3: Sample x_3 ~ P(X_3 | X_1 = x_1, X_2 = x_2)
+     ...
+     Step t: Sample x_t ~ P(X_t | X_1 = x_1, ..., X_{t-1} = x_{t-1})
+   Each sampled token is appended to the prompt history and conditions the next token.
+
+3. Supports Dynamic, Variable-Length Generation:
+   The sequence length T does not need to be predetermined. By including a special
+   terminal token <END>, the generation loop simply continues until <END> is emitted.
+
+4. Foundation for Causal Streaming in AI:
+   This sequential structure matches the causal, temporal nature of speech and text
+   processing, providing the exact theoretical architecture used by modern autoregressive
+   models (such as GPT and Gemini) to stream output token by token.
+================================================================================

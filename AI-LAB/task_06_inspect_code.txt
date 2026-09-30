@@ -1,0 +1,94 @@
+================================================================================
+AI LABORATORY: TASK 6 OUTPUT
+Part VI: Inspect the LLM-Generated Code (Questions 4 - 7)
+================================================================================
+
+QUESTION 4:
+"Where in the program are the transition counts stored?"
+
+ANSWER:
+In the FirstOrderAutoregressiveLM class, transition counts are stored in the instance
+variable:
+    self.transition_counts = defaultdict(Counter)
+
+This is a two-level nested dictionary structure where:
+  - The outer key is the conditioning previous token w_prev (representing X_{t-1}).
+  - The inner Counter maps each successor token w_curr (representing X_t) to its
+    integer transition count C(w_prev, w_curr).
+For example:
+    self.transition_counts['the']['cat'] == 3
+    self.transition_counts['the']['dog'] == 3
+    self.transition_counts['the']['mat'] == 2
+
+--------------------------------------------------------------------------------
+QUESTION 5:
+"Where is P(X_t | X_{t-1}) computed?"
+
+ANSWER:
+The conditional probability distribution P(X_t | X_{t-1}) is computed inside the
+train() method of FirstOrderAutoregressiveLM:
+
+    for w_prev, next_counts in self.transition_counts.items():
+        total_count = sum(next_counts.values())
+        for w_curr, count in next_counts.items():
+            self.probabilities[w_prev][w_curr] = count / total_count
+
+This loop normalizes the raw counts by dividing each transition count by the sum
+of all transitions originating from w_prev, implementing Maximum Likelihood Estimation:
+    P(w_curr | w_prev) = C(w_prev, w_curr) / sum_k C(w_prev, w_k)
+
+--------------------------------------------------------------------------------
+QUESTION 6:
+"How does the program choose the next word?
+Is it:
+ 1. always choosing the most probable word, or
+ 2. sampling from the probability distribution?
+Explain the difference."
+
+ANSWER:
+The program explicitly supports and implements BOTH modes:
+
+1. Mode A: Deterministic Greedy Selection (argmax):
+   Implemented in predict_most_probable():
+       w* = argmax_{w} P(w | w_prev)
+   In greedy mode, the model deterministically selects whichever token has the highest
+   conditional probability. If probabilities tie, a deterministic alphabetical tie-breaker
+   is applied.
+   Characteristics:
+     - 100% deterministic (zero variation across runs).
+     - Prone to entering absorbing periodic loops (e.g., 'the cat sat on the cat sat on...').
+
+2. Mode B: Probabilistic Sampling:
+   Implemented in sample_next_token():
+       w ~ Categorical(P(X_t = . | X_{t-1} = w_prev))
+   Using random.choices(candidates, weights=probabilities), each word has a non-zero
+   probability of being chosen proportional to its empirical transition probability.
+   Characteristics:
+     - Stochastic and non-deterministic (different runs explore different graph trajectories).
+     - Accurately models the full conditional entropy of the distribution.
+
+--------------------------------------------------------------------------------
+QUESTION 7:
+"What happens if the program encounters a word for which no transition has been observed?"
+
+ANSWER:
+1. In an Uninspected / Naive Implementation:
+   Attempting to look up self.probabilities[word] for an unobserved word (or for the
+   terminal token <END>) raises an unhandled KeyError, immediately crashing the program.
+   Furthermore, during training, attempting to divide by total_count when total_count == 0
+   causes a ZeroDivisionError.
+
+2. In our Inspected and Corrected Implementation:
+   We incorporated explicit defensive guards:
+       if token not in self.probabilities or not self.probabilities[token]:
+           return None
+   In generate_sentence(), if next_token is None, the generation loop terminates
+   gracefully rather than crashing.
+
+3. In Formal Statistical NLP:
+   An unobserved context is handled through probabilistic smoothing techniques:
+     - Laplace (add-alpha) smoothing: assigns small non-zero probability to all vocabulary words.
+     - Jelinek-Mercer or Kneser-Ney interpolation: backs off to lower-order n-grams
+       (e.g., backing off from P(X_t | X_{t-1}) to unigram P(X_t)).
+     - Out-Of-Vocabulary (<UNK>) token substitution.
+================================================================================

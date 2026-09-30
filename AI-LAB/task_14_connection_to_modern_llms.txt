@@ -1,0 +1,38 @@
+================================================================================
+AI LABORATORY: TASK 14 OUTPUT
+Part XIV & Section 18: The Connection to Modern Language Models
+================================================================================
+
+1. THE COMMON PROBABILISTIC FOUNDATION:
+Both classical n-gram Bayesian Networks and state-of-the-art Large Language Models
+(Transformers like GPT-4, Gemini, Claude, LLaMA) share the exact same underlying
+probabilistic objective:
+
+    P(x_1, ..., x_T) = prod_{t=1}^T P(x_t | x_1, ..., x_{t-1})
+
+At every step t, both systems compute:
+    P(next token | previous tokens)
+
+The fundamental difference lies not in the probability chain rule, but in HOW the
+conditional probability distribution is parameterized, represented, and learned.
+
+--------------------------------------------------------------------------------
+2. DETAILED COMPARISON TABLE:
+--------------------------------------------------------------------------------
+Dimension              | Classical Bayesian Network LM     | Modern Autoregressive Neural LM (LLM)
+--------------------------------------------------------------------------------
+Mathematical Form      | Explicit CPT Matrix / Tensor      | Deep Neural Network (Self-Attention)
+Context Window         | Fixed small window (k=1 or k=2)   | Vast attention span (8k to 1M+ tokens)
+Parameter Scaling      | Exponential in context O(|V|^(k+1)| Linear in context via Attention O(N^2)
+Parameter Storage      | Discrete conditional counts       | Continuous weight matrices (W_q, W_k, etc.)
+Learning Algorithm     | Exact Frequency Counting (MLE)    | Gradient Descent on Cross-Entropy Loss
+Generalization         | Exact string match only; brittle  | Dense semantic embeddings (word vectors)
+Zero-Frequency Issue   | Requires heuristic smoothing      | Smooth continuous interpolation across states
+Sampling Techniques    | Basic Categorical Sampling        | Temperature, Top-k, Nucleus (Top-p), Min-p
+--------------------------------------------------------------------------------
+
+3. INSIGHT:
+Modern neural networks do not replace the laws of probability; rather, they serve
+as highly expressive universal function approximators that estimate the conditional
+distribution P(x_t | x_{<t}) without suffering from the exponential CPT table explosion.
+================================================================================

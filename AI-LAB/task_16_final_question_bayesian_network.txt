@@ -1,0 +1,59 @@
+================================================================================
+AI LABORATORY: TASK 16 OUTPUT
+Part XX: Final Question: What Did the Bayesian Network Add? (Question 14)
+================================================================================
+
+QUESTION 14:
+"What did thinking of the language model as a Bayesian network give you?
+Discuss at least three of the following:
+ - a representation of dependencies;
+ - a factorisation of the joint distribution;
+ - a way of interpreting conditional probabilities;
+ - a principled method for generation;
+ - a way to reason about independence assumptions;
+ - a way to understand the effect of increasing context;
+ - a way to test whether an implementation matches its probabilistic specification."
+
+ANSWER (Comprehensive discussion of all seven dimensions):
+
+1. A Structured Representation of Dependencies:
+   Rather than viewing language generation as a black box, the Bayesian Network
+   formalism provides a Directed Acyclic Graph (DAG) where word positions are explicit
+   random variables X_1, X_2, ..., X_T. Directed edges visually and mathematically
+   define direct influence, revealing exactly which past tokens inform future predictions.
+
+2. A Rigorous Factorisation of the Joint Distribution:
+   By the local Markov property of Bayesian Networks, the joint distribution factorises
+   directly according to graph topology:
+       P(X_1, ..., X_T) = prod_{t=1}^T P(X_t | Parents(X_t))
+   For the first-order model, Parents(X_t) = {X_{t-1}}.
+   For the second-order model, Parents(X_t) = {X_{t-2}, X_{t-1}}.
+   This grounds autoregressive factorization in graphical model theory.
+
+3. A Way of Interpreting Conditional Probabilities:
+   Conditional Probability Tables (CPTs) in a Bayesian Network have precise local semantics.
+   Each row of a CPT represents an independent categorical distribution over the child
+   variable conditioned on an instantiation of its parents.
+
+4. A Principled Method for Generation (Ancestral Sampling):
+   Text generation is no longer an ad-hoc heuristic; it is standard Ancestral Forward
+   Sampling on a DAG. One traverses nodes in topological order, sampling from prior
+   distributions at root nodes and from conditional distributions at child nodes.
+
+5. A Way to Reason About Independence Assumptions (d-Separation):
+   Graph semantics allow rigorous reasoning about information flow. In X_1 -> X_2 -> X_3,
+   conditioning on X_2 d-separates X_1 from X_3, formally proving that the model forgets
+   all context older than one token. This explicitly reveals the trade-off between
+   computational simplicity and linguistic realism.
+
+6. A Way to Understand the Effect of Increasing Context:
+   Adding context corresponds to adding incoming directed edges to node X_t. The graph
+   instantly illustrates why this is both powerful and expensive: adding an edge doubles
+   parent conditioning complexity, causing the CPT table size to multiply by |V|
+   (the curse of dimensionality).
+
+7. A Way to Test Whether an Implementation Matches its Probabilistic Specification:
+   Because CPT rows correspond to valid probability distributions, we obtain non-negotiable
+   invariants that MUST hold in code: sum_{v in V} P(v | parents) == 1.0. This allows
+   us to write automated, property-based tests to mathematically verify the implementation.
+================================================================================

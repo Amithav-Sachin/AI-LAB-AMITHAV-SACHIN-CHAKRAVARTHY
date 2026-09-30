@@ -1,0 +1,160 @@
+================================================================================
+AI LABORATORY: TASK 12 OUTPUT
+Part XII: Second-Order Model Implementation and Execution Output
+================================================================================
+
+BEHAVIOURAL SPECIFICATION PROMPT USED:
+"Modify the existing first-order autoregressive model into a second-order model.
+The model should estimate:
+    P(X_t | X_{t-2}, X_{t-1})
+Represent the model using counts of observed triples and use these counts to
+construct conditional probability distributions.
+Do not replace the model with a neural network or a pretrained language model."
+
+VERBATIM EXECUTION OUTPUT (from second_order_model.py):
+--------------------------------------------------------------------------------
+======================================================================
+AI LABORATORY: SECOND-ORDER AUTOREGRESSIVE LANGUAGE MODEL
+======================================================================
+
+[1] Training Corpus (6 sentences, padded with double <START>):
+    <START> <START> the cat sat on the mat <END>
+    <START> <START> the cat sat on the rug <END>
+    <START> <START> the dog sat on the mat <END>
+    <START> <START> the dog ran to the park <END>
+    <START> <START> the cat ran to the park <END>
+    <START> <START> the dog sat on the rug <END>
+
+[2] Model Trained. Vocabulary size: 12 unique tokens.
+    Observed bigram contexts: 15
+
+[3] Part VII/XII - Probability Normalization Test: sum_v P(v | w1, w2) == 1.0
+    sum_v P(v | ('<START>', '<START>')) = 1.000000 -> [PASSED]
+    sum_v P(v | ('<START>', 'the')    ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('cat', 'ran')        ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('cat', 'sat')        ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('dog', 'ran')        ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('dog', 'sat')        ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('on', 'the')         ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('ran', 'to')         ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('sat', 'on')         ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('the', 'cat')        ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('the', 'dog')        ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('the', 'mat')        ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('the', 'park')       ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('the', 'rug')        ) = 1.000000 -> [PASSED]
+    sum_v P(v | ('to', 'the')         ) = 1.000000 -> [PASSED]
+    Overall Normalization Status: ALL PASSED (100% Valid CPT)
+
+[4] Part XII/XIII - Conditional Distributions for Selected Contexts:
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('<START>', '<START>')):
+  Total occurrences of context: 6
+    P(the    | ('<START>', '<START>')) = 6/6 = 1.0000 (100.0%)
+    argmax_w P(w | ('<START>', '<START>')) = 'the' (p=1.0000)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('<START>', 'the')):
+  Total occurrences of context: 6
+    P(cat    | ('<START>', 'the')  ) = 3/6 = 0.5000 ( 50.0%)
+    P(dog    | ('<START>', 'the')  ) = 3/6 = 0.5000 ( 50.0%)
+    argmax_w P(w | ('<START>', 'the')) = 'cat' (p=0.5000, tied with ['cat', 'dog'])
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('the', 'cat')):
+  Total occurrences of context: 3
+    P(sat    | ('the', 'cat')      ) = 2/3 = 0.6667 ( 66.7%)
+    P(ran    | ('the', 'cat')      ) = 1/3 = 0.3333 ( 33.3%)
+    argmax_w P(w | ('the', 'cat')) = 'sat' (p=0.6667)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('the', 'dog')):
+  Total occurrences of context: 3
+    P(sat    | ('the', 'dog')      ) = 2/3 = 0.6667 ( 66.7%)
+    P(ran    | ('the', 'dog')      ) = 1/3 = 0.3333 ( 33.3%)
+    argmax_w P(w | ('the', 'dog')) = 'sat' (p=0.6667)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('cat', 'sat')):
+  Total occurrences of context: 2
+    P(on     | ('cat', 'sat')      ) = 2/2 = 1.0000 (100.0%)
+    argmax_w P(w | ('cat', 'sat')) = 'on' (p=1.0000)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('cat', 'ran')):
+  Total occurrences of context: 1
+    P(to     | ('cat', 'ran')      ) = 1/1 = 1.0000 (100.0%)
+    argmax_w P(w | ('cat', 'ran')) = 'to' (p=1.0000)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('sat', 'on')):
+  Total occurrences of context: 4
+    P(the    | ('sat', 'on')       ) = 4/4 = 1.0000 (100.0%)
+    argmax_w P(w | ('sat', 'on')) = 'the' (p=1.0000)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('on', 'the')):
+  Total occurrences of context: 4
+    P(mat    | ('on', 'the')       ) = 2/4 = 0.5000 ( 50.0%)
+    P(rug    | ('on', 'the')       ) = 2/4 = 0.5000 ( 50.0%)
+    argmax_w P(w | ('on', 'the')) = 'mat' (p=0.5000, tied with ['mat', 'rug'])
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('ran', 'to')):
+  Total occurrences of context: 2
+    P(the    | ('ran', 'to')       ) = 2/2 = 1.0000 (100.0%)
+    argmax_w P(w | ('ran', 'to')) = 'the' (p=1.0000)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('to', 'the')):
+  Total occurrences of context: 2
+    P(park   | ('to', 'the')       ) = 2/2 = 1.0000 (100.0%)
+    argmax_w P(w | ('to', 'the')) = 'park' (p=1.0000)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('the', 'mat')):
+  Total occurrences of context: 2
+    P(<END>  | ('the', 'mat')      ) = 2/2 = 1.0000 (100.0%)
+    argmax_w P(w | ('the', 'mat')) = '<END>' (p=1.0000)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('the', 'park')):
+  Total occurrences of context: 2
+    P(<END>  | ('the', 'park')     ) = 2/2 = 1.0000 (100.0%)
+    argmax_w P(w | ('the', 'park')) = '<END>' (p=1.0000)
+-------------------------------------------------------
+Conditional Probability Distribution P(X_t | (X_{t-2}, X_{t-1}) = ('the', 'rug')):
+  Total occurrences of context: 2
+    P(<END>  | ('the', 'rug')      ) = 2/2 = 1.0000 (100.0%)
+    argmax_w P(w | ('the', 'rug')) = '<END>' (p=1.0000)
+
+======================================================================
+[5] Part XII/XIII - Text Generation: 20 Sentences using Sampling Mode:
+======================================================================
+     1. <START> the cat sat on the rug <END>
+     2. <START> the cat sat on the mat <END>
+     3. <START> the dog sat on the mat <END>
+     4. <START> the cat sat on the mat <END>
+     5. <START> the dog ran to the park <END>
+     6. <START> the dog sat on the rug <END>
+     7. <START> the cat sat on the mat <END>
+     8. <START> the cat sat on the rug <END>
+     9. <START> the dog sat on the rug <END>
+    10. <START> the dog ran to the park <END>
+    11. <START> the dog ran to the park <END>
+    12. <START> the cat sat on the rug <END>
+    13. <START> the cat ran to the park <END>
+    14. <START> the dog sat on the rug <END>
+    15. <START> the dog sat on the rug <END>
+    16. <START> the cat sat on the rug <END>
+    17. <START> the cat ran to the park <END>
+    18. <START> the dog sat on the mat <END>
+    19. <START> the dog ran to the park <END>
+    20. <START> the cat sat on the rug <END>
+
+======================================================================
+[6] Part XIII - Greedy vs Sampling Comparison (Second-Order):
+======================================================================
+  Mode A: Greedy Generation (5 runs):
+    Run 1: <START> the cat sat on the mat <END>
+    Run 2: <START> the cat sat on the mat <END>
+    Run 3: <START> the cat sat on the mat <END>
+    Run 4: <START> the cat sat on the mat <END>
+    Run 5: <START> the cat sat on the mat <END>
+
+  Mode B: Sampling Generation (5 runs):
+    Run 1: <START> the dog sat on the mat <END>
+    Run 2: <START> the cat sat on the mat <END>
+    Run 3: <START> the cat sat on the mat <END>
+    Run 4: <START> the cat ran to the park <END>
+    Run 5: <START> the cat ran to the park <END>
+================================================================================

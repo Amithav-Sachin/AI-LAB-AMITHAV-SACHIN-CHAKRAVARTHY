@@ -1,0 +1,83 @@
+================================================================================
+AI LABORATORY: TASK 8 OUTPUT
+Part VIII: Predicting the Next Word (Question 9)
+================================================================================
+
+1. CONDITIONAL DISTRIBUTIONS AND MOST PROBABLE NEXT WORD PREDICTIONS:
+Using the trained first-order model to compute:
+    P(X_{t+1} | X_t = context)
+and identifying the most probable next word:
+    argmax_w P(w | context)
+
+--------------------------------------------------------------------------------
+Context Token: 'the' (Observed 12 times in training data)
+Conditional Distribution P(X_{t+1} | X_t = 'the'):
+    P(cat      | 'the') = 3/12 = 0.2500 ( 25.0%)
+    P(dog      | 'the') = 3/12 = 0.2500 ( 25.0%)
+    P(mat      | 'the') = 2/12 = 0.1667 ( 16.7%)
+    P(park     | 'the') = 2/12 = 0.1667 ( 16.7%)
+    P(rug      | 'the') = 2/12 = 0.1667 ( 16.7%)
+  Most Probable Prediction (argmax): 'cat' (p = 0.2500, tied with ['cat', 'dog'])
+--------------------------------------------------------------------------------
+Context Token: 'cat' (Observed 3 times in training data)
+Conditional Distribution P(X_{t+1} | X_t = 'cat'):
+    P(sat      | 'cat') = 2/3 = 0.6667 ( 66.7%)
+    P(ran      | 'cat') = 1/3 = 0.3333 ( 33.3%)
+  Most Probable Prediction (argmax): 'sat' (p = 0.6667)
+--------------------------------------------------------------------------------
+Context Token: 'dog' (Observed 3 times in training data)
+Conditional Distribution P(X_{t+1} | X_t = 'dog'):
+    P(sat      | 'dog') = 2/3 = 0.6667 ( 66.7%)
+    P(ran      | 'dog') = 1/3 = 0.3333 ( 33.3%)
+  Most Probable Prediction (argmax): 'sat' (p = 0.6667)
+--------------------------------------------------------------------------------
+Context Token: 'sat' (Observed 4 times in training data)
+Conditional Distribution P(X_{t+1} | X_t = 'sat'):
+    P(on       | 'sat') = 4/4 = 1.0000 (100.0%)
+  Most Probable Prediction (argmax): 'on' (p = 1.0000)
+--------------------------------------------------------------------------------
+Context Token: 'ran' (Observed 2 times in training data)
+Conditional Distribution P(X_{t+1} | X_t = 'ran'):
+    P(to       | 'ran') = 2/2 = 1.0000 (100.0%)
+  Most Probable Prediction (argmax): 'to' (p = 1.0000)
+--------------------------------------------------------------------------------
+Context Token: '<START>' (Observed 6 times in training data)
+Conditional Distribution P(X_{t+1} | X_t = '<START>'):
+    P(the      | '<START>') = 6/6 = 1.0000 (100.0%)
+  Most Probable Prediction (argmax): 'the' (p = 1.0000)
+
+--------------------------------------------------------------------------------
+2. QUESTION 9 AND DETAILED ANSWER:
+--------------------------------------------------------------------------------
+QUESTION 9:
+"Are the most probable predictions always the same as the words that you would
+personally expect? What does this tell you about the difference between:
+  a probability model
+and
+  human linguistic expectations?"
+
+ANSWER:
+1. Comparison with Personal Linguistic Expectations:
+   - For 'the': The model's argmax is tied between 'cat' and 'dog' (25% each). However,
+     the model also assigns 16.7% probability each to 'mat', 'park', and 'rug'. When
+     starting a sentence ('<START> the'), a human expects an animal or agent, never an
+     inanimate destination like 'mat' or 'park'. Yet the first-order model cannot distinguish
+     sentence-initial 'the' from prepositional 'the' (e.g. 'on the', 'to the').
+   - For 'sat': The model predicts 'on' with 100% certainty. A human speaker readily
+     anticipates other prepositions ('sat by', 'sat near', 'sat down', 'sat quietly').
+   - For 'ran': The model predicts 'to' with 100% certainty, ignoring common alternatives
+     like 'ran away', 'ran fast', or 'ran home'.
+
+2. The Difference Between a Probability Model and Human Linguistic Expectations:
+   - Nature of a Probability Model:
+     A statistical probability model is an empirical estimator strictly conditioned on
+     the sample statistics of a specific, finite training dataset under rigid structural
+     assumptions (Markov independence). It has no internal representation of world
+     knowledge, physics (cats sit on mats, mats do not sit), grammar categories, or
+     communicative intent. It merely computes ratios of string counts.
+   - Nature of Human Linguistic Expectations:
+     Human expectations are guided by deep semantic comprehension, world knowledge,
+     compositional syntax, pragmatic context, and rich open-ended vocabulary. Humans
+     understand meaning and physical reality; simple n-gram probability models only
+     recognize local co-occurrence frequencies.
+================================================================================

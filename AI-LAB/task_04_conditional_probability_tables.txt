@@ -1,0 +1,108 @@
+================================================================================
+AI LABORATORY: TASK 4 OUTPUT
+Part IV: Constructing the Conditional Probability Table (Question 3)
+================================================================================
+
+1. MATHEMATICAL ESTIMATION FORMULA:
+The first-order model estimates conditional transition probabilities using
+Maximum Likelihood Estimation (MLE) based on observed bigram frequency counts:
+
+                     C(w_i, w_j)
+    P(w_j | w_i) = -----------------
+                   sum_k C(w_i, w_k)
+
+Where:
+  - C(w_i, w_j) is the number of times token w_j immediately follows token w_i.
+  - The denominator sum_k C(w_i, w_k) is the total number of transitions originating from w_i.
+
+--------------------------------------------------------------------------------
+2. QUESTION 3 AND DETAILED CPT DERIVATIONS:
+--------------------------------------------------------------------------------
+QUESTION 3:
+"Construct the conditional probability distribution P(next word | current word)
+for at least the following words: the, cat, dog, sat, ran.
+Identify any zero-probability transitions."
+
+CPT DERIVATION FOR SPECIFIED WORDS:
+
+(a) Current Word: 'the'
+    Total context occurrences sum_k C('the', w_k) = 12
+    Observed transitions:
+      - 'cat' follows 'the' : 3 times  --> P('cat'  | 'the') = 3/12 = 0.2500 (25.00%)
+      - 'dog' follows 'the' : 3 times  --> P('dog'  | 'the') = 3/12 = 0.2500 (25.00%)
+      - 'mat' follows 'the' : 2 times  --> P('mat'  | 'the') = 2/12 = 0.1667 (16.67%)
+      - 'park' follows 'the': 2 times  --> P('park' | 'the') = 2/12 = 0.1667 (16.67%)
+      - 'rug' follows 'the' : 2 times  --> P('rug'  | 'the') = 2/12 = 0.1667 (16.67%)
+    Sum of probabilities = 3/12 + 3/12 + 2/12 + 2/12 + 2/12 = 12/12 = 1.0000 (100.0%)
+
+    Zero-Probability Transitions from 'the' (P(w | 'the') = 0):
+      P('the' | 'the') = 0, P('sat' | 'the') = 0, P('ran' | 'the') = 0,
+      P('on'  | 'the') = 0, P('to'  | 'the') = 0, P('<START>' | 'the') = 0,
+      P('<END>' | 'the') = 0.
+
+(b) Current Word: 'cat'
+    Total context occurrences sum_k C('cat', w_k) = 3
+    Observed transitions:
+      - 'sat' follows 'cat' : 2 times  --> P('sat' | 'cat') = 2/3 = 0.6667 (66.67%)
+      - 'ran' follows 'cat' : 1 time   --> P('ran' | 'cat') = 1/3 = 0.3333 (33.33%)
+    Sum of probabilities = 2/3 + 1/3 = 1.0000 (100.0%)
+
+    Zero-Probability Transitions from 'cat' (P(w | 'cat') = 0):
+      P('the' | 'cat') = 0, P('cat' | 'cat') = 0, P('dog' | 'cat') = 0,
+      P('on'  | 'cat') = 0, P('to'  | 'cat') = 0, P('mat' | 'cat') = 0,
+      P('rug' | 'cat') = 0, P('park' | 'cat') = 0, P('<END>' | 'cat') = 0.
+
+(c) Current Word: 'dog'
+    Total context occurrences sum_k C('dog', w_k) = 3
+    Observed transitions:
+      - 'sat' follows 'dog' : 2 times  --> P('sat' | 'dog') = 2/3 = 0.6667 (66.67%)
+      - 'ran' follows 'dog' : 1 time   --> P('ran' | 'dog') = 1/3 = 0.3333 (33.33%)
+    Sum of probabilities = 2/3 + 1/3 = 1.0000 (100.0%)
+
+    Zero-Probability Transitions from 'dog' (P(w | 'dog') = 0):
+      P('the' | 'dog') = 0, P('cat' | 'dog') = 0, P('dog' | 'dog') = 0,
+      P('on'  | 'dog') = 0, P('to'  | 'dog') = 0, P('mat' | 'dog') = 0,
+      P('rug' | 'dog') = 0, P('park' | 'dog') = 0, P('<END>' | 'dog') = 0.
+
+(d) Current Word: 'sat'
+    Total context occurrences sum_k C('sat', w_k) = 4
+    Observed transitions:
+      - 'on' follows 'sat'  : 4 times  --> P('on' | 'sat') = 4/4 = 1.0000 (100.0%)
+    Sum of probabilities = 4/4 = 1.0000 (100.0%)
+
+    Zero-Probability Transitions from 'sat' (P(w | 'sat') = 0):
+      P(w | 'sat') = 0 for all w != 'on'.
+
+(e) Current Word: 'ran'
+    Total context occurrences sum_k C('ran', w_k) = 2
+    Observed transitions:
+      - 'to' follows 'ran'  : 2 times  --> P('to' | 'ran') = 2/2 = 1.0000 (100.0%)
+    Sum of probabilities = 2/2 = 1.0000 (100.0%)
+
+    Zero-Probability Transitions from 'ran' (P(w | 'ran') = 0):
+      P(w | 'ran') = 0 for all w != 'to'.
+
+--------------------------------------------------------------------------------
+3. FULL FIRST-ORDER CPT MATRIX (ALL OBSERVED TRANSITIONS):
+--------------------------------------------------------------------------------
+Previous Token (w_i)   | Next Token (w_j)   | Count    | P(w_j | w_i)  
+----------------------------------------------------------------------
+<END>                  | [TERMINAL]         | 0/0      | 0.0000        
+<START>                | the                | 6/6      | 1.0000        
+cat                    | sat                | 2/3      | 0.6667        
+cat                    | ran                | 1/3      | 0.3333        
+dog                    | sat                | 2/3      | 0.6667        
+dog                    | ran                | 1/3      | 0.3333        
+mat                    | <END>              | 2/2      | 1.0000        
+on                     | the                | 4/4      | 1.0000        
+park                   | <END>              | 2/2      | 1.0000        
+ran                    | to                 | 2/2      | 1.0000        
+rug                    | <END>              | 2/2      | 1.0000        
+sat                    | on                 | 4/4      | 1.0000        
+the                    | cat                | 3/12     | 0.2500        
+the                    | dog                | 3/12     | 0.2500        
+the                    | mat                | 2/12     | 0.1667        
+the                    | park               | 2/12     | 0.1667        
+the                    | rug                | 2/12     | 0.1667        
+to                     | the                | 2/2      | 1.0000        
+================================================================================

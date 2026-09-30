@@ -1,0 +1,48 @@
+================================================================================
+AI LABORATORY: TASK 2 OUTPUT
+Part II: A Bayesian Network for Text (Question 2)
+================================================================================
+
+1. GRAPHICAL MODEL STRUCTURE:
+A simple autoregressive language model where each word depends only on the
+immediately preceding word is represented as a linear-chain Bayesian Network:
+
+    [X_1] ---> [X_2] ---> [X_3] ---> [X_4] ---> ... ---> [X_T]
+
+In this Directed Acyclic Graph (DAG):
+  - Each node X_t represents a categorical random variable corresponding to the token
+    at position t.
+  - Directed edges represent direct conditional probabilistic dependencies.
+  - The parent set of node X_t is:
+        Parents(X_t) = { X_{t-1} }   for t >= 2
+        Parents(X_1) = {} (root node)
+
+--------------------------------------------------------------------------------
+2. QUESTION 2 AND DETAILED ANSWER:
+--------------------------------------------------------------------------------
+QUESTION 2:
+"What independence assumption is being made by this network?
+Express your answer using probability notation."
+
+ANSWER:
+The network makes the FIRST-ORDER MARKOV INDEPENDENCE ASSUMPTION.
+It assumes that the token at position t is conditionally independent of all earlier
+tokens (X_1, X_2, ..., X_{t-2}), given the value of the immediately preceding token X_{t-1}.
+
+Expressed in formal conditional independence notation:
+    X_t _||_ (X_1, X_2, ..., X_{t-2}) | X_{t-1}    for all t >= 2
+
+Expressed in terms of conditional probability distributions:
+    P(X_t | X_1, X_2, ..., X_{t-1}) = P(X_t | X_{t-1})
+
+Under this assumption, the general chain rule factorisation simplifies to:
+    P(X_1, X_2, ..., X_T) = P(X_1) * prod_{t=2}^T P(X_t | X_{t-1})
+
+For a 4-token sequence (X_1, X_2, X_3, X_4), this yields:
+    P(X_1, X_2, X_3, X_4) = P(X_1) * P(X_2 | X_1) * P(X_3 | X_2) * P(X_4 | X_3)
+
+Graphical Semantics (d-separation):
+In the chain X_1 -> X_2 -> X_3 -> X_4, conditioning on X_2 blocks the active path
+between X_1 and X_3 (d-separating them). Thus, once X_{t-1} is known, knowledge of
+the remote past provides no additional information about X_t under this model.
+================================================================================

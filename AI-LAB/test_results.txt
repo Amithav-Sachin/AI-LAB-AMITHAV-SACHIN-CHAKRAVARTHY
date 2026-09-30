@@ -1,0 +1,59 @@
+================================================================================
+DELIVERABLE 5: PROBABILITY NORMALISATION TESTS RESULTS
+Bayesian Networks and Autoregressive Language Models (Part VII & Part XII)
+Testing Invariant: sum_{v in V} P(v | context) == 1.0
+================================================================================
+
+1. First-Order Autoregressive Model Normalisation Test:
+---------------------------------------------------------------------------
+Conditioning Word (w)  | sum_v P(v | w)   | Tolerance (|sum-1|)  | Status    
+---------------------------------------------------------------------------
+<START>                | 1.00000000       | 0.00e+00             | PASSED    
+cat                    | 1.00000000       | 0.00e+00             | PASSED    
+dog                    | 1.00000000       | 0.00e+00             | PASSED    
+mat                    | 1.00000000       | 0.00e+00             | PASSED    
+on                     | 1.00000000       | 0.00e+00             | PASSED    
+park                   | 1.00000000       | 0.00e+00             | PASSED    
+ran                    | 1.00000000       | 0.00e+00             | PASSED    
+rug                    | 1.00000000       | 0.00e+00             | PASSED    
+sat                    | 1.00000000       | 0.00e+00             | PASSED    
+the                    | 1.00000000       | 0.00e+00             | PASSED    
+to                     | 1.00000000       | 0.00e+00             | PASSED    
+---------------------------------------------------------------------------
+First-Order Overall Status: ALL PASSED (Invariant Holds for all conditioning tokens)
+
+
+2. Second-Order Autoregressive Model Normalisation Test:
+---------------------------------------------------------------------------
+Conditioning Context (w1, w2) | sum_v P(v | context) | Tolerance       | Status    
+---------------------------------------------------------------------------
+('<START>', '<START>')       | 1.00000000       | 0.00e+00        | PASSED    
+('<START>', 'the')           | 1.00000000       | 0.00e+00        | PASSED    
+('cat', 'ran')               | 1.00000000       | 0.00e+00        | PASSED    
+('cat', 'sat')               | 1.00000000       | 0.00e+00        | PASSED    
+('dog', 'ran')               | 1.00000000       | 0.00e+00        | PASSED    
+('dog', 'sat')               | 1.00000000       | 0.00e+00        | PASSED    
+('on', 'the')                | 1.00000000       | 0.00e+00        | PASSED    
+('ran', 'to')                | 1.00000000       | 0.00e+00        | PASSED    
+('sat', 'on')                | 1.00000000       | 0.00e+00        | PASSED    
+('the', 'cat')               | 1.00000000       | 0.00e+00        | PASSED    
+('the', 'dog')               | 1.00000000       | 0.00e+00        | PASSED    
+('the', 'mat')               | 1.00000000       | 0.00e+00        | PASSED    
+('the', 'park')              | 1.00000000       | 0.00e+00        | PASSED    
+('the', 'rug')               | 1.00000000       | 0.00e+00        | PASSED    
+('to', 'the')                | 1.00000000       | 0.00e+00        | PASSED    
+---------------------------------------------------------------------------
+Second-Order Overall Status: ALL PASSED (Invariant Holds for all bigram contexts)
+
+
+3. Theoretical Diagnostic Check (Question 8 Response):
+Question 8 asks: 'If one of the totals is 0.87, what does this tell you about the implementation?'
+Answer & Diagnostic Summary:
+- A total of 0.87 strictly violates the Law of Total Probability and Kolmogorov's Second Axiom.
+- In a correct conditional probability table, the sum of outgoing transition probabilities for
+  any non-terminal context MUST equal exactly 1.0000.
+- If sum = 0.87, exactly 13% of probability mass is unaccounted for. This indicates:
+  a) Missing outgoing transitions (e.g. failing to count transitions to <END> or specific words);
+  b) Incorrect normalisation denominator (e.g. dividing by an inflated count or corpus-level total);
+  c) Buggy truncation or heuristic filtering without re-normalisation.
+Our automated tests confirm that our implementation achieves sum = 1.00000000 across all contexts.

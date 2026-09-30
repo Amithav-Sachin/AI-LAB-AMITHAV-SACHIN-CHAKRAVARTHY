@@ -1,0 +1,38 @@
+================================================================================
+AI LABORATORY: MASTER INDEX OF TASK OUTPUT FILES
+Bayesian Networks and Autoregressive Language Models
+================================================================================
+
+Below is the directory mapping of the individual output files generated for each
+task, question, and deliverable in the workspace:
+
+Task Output File                             | Lab Section | Description
+--------------------------------------------------------------------------------
+task_01_from_probability_to_language.txt     | Part I      | Chain-rule factorization & Question 1 answer
+task_02_bayesian_network_for_text.txt        | Part II     | Linear-chain BN graph & Question 2 Markov assumption
+task_03_language_dataset.txt                 | Part III    | Tokenized 6-sentence corpus, vocabulary, and stats
+task_04_conditional_probability_tables.txt   | Part IV     | Complete CPTs, Question 3, and zero-prob transitions
+task_05_first_order_implementation_output.txt| Part V      | Verbatim console output from first_order_model.py
+task_06_inspect_code.txt                     | Part VI     | Code inspection answers for Questions 4, 5, 6, and 7
+task_07_test_probability_model.txt           | Part VII    | Normalization test results & Question 8 diagnosis
+task_08_predicting_next_word.txt             | Part VIII   | Argmax predictions for 6 contexts & Question 9 answer
+task_09_generate_text_sampling.txt           | Part IX     | 20 sentences sampled from first-order model & analysis
+task_10_deterministic_vs_probabilistic.txt   | Part X      | Mode A (5 greedy) vs Mode B (5 sampled) & Question 10
+task_11_second_order_bayesian_network.txt    | Part XI     | 2nd-order factorisation & Question 11 comparison
+task_12_second_order_implementation_output.txt| Part XII   | Verbatim console output from second_order_model.py
+task_13_model_comparison.txt                 | Part XIII   | Parameter & diversity comparison & Question 12 answer
+task_14_connection_to_modern_llms.txt        | Part XIV/18 | Connection between Bayesian Networks and modern LLMs
+task_15_reflection_role_of_llm.txt           | Part XV     | LLM prompt reflection, Question 13 & code correction
+task_16_final_question_bayesian_network.txt  | Part XX     | Comprehensive Question 14 analysis (all 7 dimensions)
+--------------------------------------------------------------------------------
+
+ADDITIONAL SYSTEM ARTIFACTS:
+- first_order_model.py   : Python implementation of 1st-order model
+- second_order_model.py  : Python implementation of 2nd-order model
+- model_comparison.py    : Automated benchmark script comparing both models
+- run_experiments.py     : Orchestration runner
+- cpt_tables.txt         : Full CPT reference tables
+- generated_sentences.txt: Complete generated sentences repository
+- test_results.txt       : Probability normalization logs
+- LAB_REPORT.md          : Complete, master academic laboratory report
+================================================================================

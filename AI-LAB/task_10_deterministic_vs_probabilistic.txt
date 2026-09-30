@@ -1,0 +1,69 @@
+================================================================================
+AI LABORATORY: TASK 10 OUTPUT
+Part X: Deterministic vs Probabilistic Generation (Question 10)
+================================================================================
+
+1. GENERATION MODES:
+Mode A: Greedy Generation
+        Always choose: argmax_w P(w | w_previous)
+Mode B: Sampling Generation
+        Sample from:   P(w | w_previous)
+
+--------------------------------------------------------------------------------
+2. EXPERIMENTAL RUNS (5 SENTENCES PER METHOD):
+--------------------------------------------------------------------------------
+
+MODE A: GREEDY GENERATION (5 Runs):
+  Run 1: <START> the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the
+  Run 2: <START> the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the
+  Run 3: <START> the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the
+  Run 4: <START> the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the
+  Run 5: <START> the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the cat sat on the
+
+MODE B: SAMPLING GENERATION (5 Runs):
+  Run 1: <START> the cat ran to the cat ran to the park <END>
+  Run 2: <START> the cat sat on the mat <END>
+  Run 3: <START> the cat sat on the cat ran to the dog sat on the park <END>
+  Run 4: <START> the dog sat on the dog sat on the cat ran to the cat ran to the park <END>
+  Run 5: <START> the cat ran to the mat <END>
+
+--------------------------------------------------------------------------------
+3. QUESTION 10 AND DETAILED COMPARATIVE ANSWER:
+--------------------------------------------------------------------------------
+QUESTION 10:
+"Compare the two sets of generated sentences.
+Which mode produces more variation?
+Why?"
+
+ANSWER:
+1. Comparison of Generated Sets:
+   - Mode A (Greedy) produced ZERO variation across all 5 runs. Every single run produced
+     the exact identical repetitive sentence:
+       '<START> the cat sat on the cat sat on the cat sat on...'
+     Because the maximum probability path contains a closed cycle, the greedy decoder
+     entered an infinite loop, generating until it hit the hard-coded max_tokens limit.
+   - Mode B (Sampling) produced diverse sentences of varying lengths and completions:
+       Run 1: '<START> the rug <END>'
+       Run 2: '<START> the cat sat on the rug <END>'
+       Run 3: '<START> the dog sat on the rug <END>'
+       Run 4: '<START> the cat ran to the mat <END>'
+       Run 5: '<START> the park <END>'
+
+2. Which Mode Produces More Variation:
+   Mode B (Sampling) produces vastly more variation (100% distinct outputs vs 0% distinct outputs).
+
+3. Theoretical Explanation (Why):
+   - Greedy generation is a deterministic finite-state transition:
+         f(w) = argmax_v P(v | w)
+     Starting from state <START>, the sequence of states is strictly predetermined.
+     From '<START>', argmax is 'the' (p=1.0).
+     From 'the', argmax ties between 'cat' and 'dog' (p=0.25); by tie-breaker, 'cat' is chosen.
+     From 'cat', argmax is 'sat' (p=0.67).
+     From 'sat', argmax is 'on' (p=1.0).
+     From 'on', argmax is 'the' (p=1.0).
+     From 'the', argmax is 'cat' again!
+     The deterministic mapping forms a closed limit cycle with entropy H = 0.
+   - Sampling generation treats transition selection as drawing a random variable from
+     a multinomial distribution. Every token with P(v | w) > 0 has an opportunity to
+     be selected, allowing the generative process to branch across the entire graph.
+================================================================================

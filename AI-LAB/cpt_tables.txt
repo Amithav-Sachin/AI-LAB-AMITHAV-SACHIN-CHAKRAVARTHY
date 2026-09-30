@@ -1,0 +1,97 @@
+================================================================================
+DELIVERABLE 3: CONDITIONAL PROBABILITY TABLES (CPTs)
+Bayesian Networks and Autoregressive Language Models
+================================================================================
+
+PART A: FIRST-ORDER AUTOREGRESSIVE MODEL CPT
+Model Equation: P(X_t | X_{t-1})
+Vocabulary: <END>, <START>, cat, dog, mat, on, park, ran, rug, sat, the, to
+
+1. Observed Non-Zero Conditional Transitions P(X_t | X_{t-1}):
+--------------------------------------------------------------------------------
+Context (X_{t-1})  | Next Token (X_t) | Count    | Probability  | Percentage
+--------------------------------------------------------------------------------
+<END>              | [TERMINAL / NONE] | 0/0      | 0.0000       | 0.00%     
+<START>            | the              | 6/6      | 1.0000       | 100.00%
+cat                | sat              | 2/3      | 0.6667       |  66.67%
+cat                | ran              | 1/3      | 0.3333       |  33.33%
+dog                | sat              | 2/3      | 0.6667       |  66.67%
+dog                | ran              | 1/3      | 0.3333       |  33.33%
+mat                | <END>            | 2/2      | 1.0000       | 100.00%
+on                 | the              | 4/4      | 1.0000       | 100.00%
+park               | <END>            | 2/2      | 1.0000       | 100.00%
+ran                | to               | 2/2      | 1.0000       | 100.00%
+rug                | <END>            | 2/2      | 1.0000       | 100.00%
+sat                | on               | 4/4      | 1.0000       | 100.00%
+the                | cat              | 3/12     | 0.2500       |  25.00%
+the                | dog              | 3/12     | 0.2500       |  25.00%
+the                | mat              | 2/12     | 0.1667       |  16.67%
+the                | park             | 2/12     | 0.1667       |  16.67%
+the                | rug              | 2/12     | 0.1667       |  16.67%
+to                 | the              | 2/2      | 1.0000       | 100.00%
+--------------------------------------------------------------------------------
+
+2. Zero-Probability Transitions in First-Order Model (Question 3 Analysis):
+--------------------------------------------------------------------------------
+For current word 'the':
+  - Non-zero transitions (P > 0): ['cat', 'dog', 'mat', 'park', 'rug']
+  - Zero-probability transitions (P = 0): ['<END>', 'on', 'ran', 'sat', 'the', 'to']
+    Example zero-prob transitions: P('mat' | 'the') = 0, P('to' | 'the') = 0 (unless in non-zero set)
+
+For current word 'cat':
+  - Non-zero transitions (P > 0): ['ran', 'sat']
+  - Zero-probability transitions (P = 0): ['<END>', 'cat', 'dog', 'mat', 'on', 'park', 'rug', 'the', 'to']
+    Example zero-prob transitions: P('mat' | 'cat') = 0, P('to' | 'cat') = 0 (unless in non-zero set)
+
+For current word 'dog':
+  - Non-zero transitions (P > 0): ['ran', 'sat']
+  - Zero-probability transitions (P = 0): ['<END>', 'cat', 'dog', 'mat', 'on', 'park', 'rug', 'the', 'to']
+    Example zero-prob transitions: P('mat' | 'dog') = 0, P('to' | 'dog') = 0 (unless in non-zero set)
+
+For current word 'sat':
+  - Non-zero transitions (P > 0): ['on']
+  - Zero-probability transitions (P = 0): ['<END>', 'cat', 'dog', 'mat', 'park', 'ran', 'rug', 'sat', 'the', 'to']
+    Example zero-prob transitions: P('mat' | 'sat') = 0, P('to' | 'sat') = 0 (unless in non-zero set)
+
+For current word 'ran':
+  - Non-zero transitions (P > 0): ['to']
+  - Zero-probability transitions (P = 0): ['<END>', 'cat', 'dog', 'mat', 'on', 'park', 'ran', 'rug', 'sat', 'the']
+    Example zero-prob transitions: P('mat' | 'ran') = 0, P('to' | 'ran') = 0 (unless in non-zero set)
+
+
+================================================================================
+PART B: SECOND-ORDER AUTOREGRESSIVE MODEL CPT
+Model Equation: P(X_t | X_{t-2}, X_{t-1})
+Bayesian Network Structure: X_{t-2} -> X_t <- X_{t-1}
+================================================================================
+
+Context (X_{t-2}, X_{t-1})   | Next Token (X_t) | Count    | Probability  | Percentage
+--------------------------------------------------------------------------------
+('<START>', '<START>')       | the              | 6/6      | 1.0000       | 100.00%
+('<START>', 'the')           | cat              | 3/6      | 0.5000       |  50.00%
+('<START>', 'the')           | dog              | 3/6      | 0.5000       |  50.00%
+('cat', 'ran')               | to               | 1/1      | 1.0000       | 100.00%
+('cat', 'sat')               | on               | 2/2      | 1.0000       | 100.00%
+('dog', 'ran')               | to               | 1/1      | 1.0000       | 100.00%
+('dog', 'sat')               | on               | 2/2      | 1.0000       | 100.00%
+('on', 'the')                | mat              | 2/4      | 0.5000       |  50.00%
+('on', 'the')                | rug              | 2/4      | 0.5000       |  50.00%
+('ran', 'to')                | the              | 2/2      | 1.0000       | 100.00%
+('sat', 'on')                | the              | 4/4      | 1.0000       | 100.00%
+('the', 'cat')               | sat              | 2/3      | 0.6667       |  66.67%
+('the', 'cat')               | ran              | 1/3      | 0.3333       |  33.33%
+('the', 'dog')               | sat              | 2/3      | 0.6667       |  66.67%
+('the', 'dog')               | ran              | 1/3      | 0.3333       |  33.33%
+('the', 'mat')               | <END>            | 2/2      | 1.0000       | 100.00%
+('the', 'park')              | <END>            | 2/2      | 1.0000       | 100.00%
+('the', 'rug')               | <END>            | 2/2      | 1.0000       | 100.00%
+('to', 'the')                | park             | 2/2      | 1.0000       | 100.00%
+--------------------------------------------------------------------------------
+
+3. Zero-Probability Contexts and Transitions in Second-Order Model:
+  - Total possible bigram contexts: 12 x 12 = 144
+  - Observed contexts in training data: 15
+  - Completely zero-probability contexts: 129 (Sparsity: 89.58%)
+  - Key difference: Contexts like ('on', 'the') can only lead to 'mat' (0.50) or 'rug' (0.50);
+    transition to 'park' has probability 0.00. In contrast, ('to', 'the') transitions to 'park' (1.00)
+    and has 0.00 probability for 'mat' and 'rug'.

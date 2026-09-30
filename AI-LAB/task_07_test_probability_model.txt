@@ -1,0 +1,68 @@
+================================================================================
+AI LABORATORY: TASK 7 OUTPUT
+Part VII: Test the Probability Model (Question 8)
+================================================================================
+
+1. PROBABILISTIC PROPERTY TEST SPECIFICATION:
+For every conditioning word w in the vocabulary (excluding terminal states), the sum
+of outgoing conditional transition probabilities must strictly equal 1.0:
+
+    sum_{v in V} P(v | w) = 1.0
+
+Testing Code Implementation:
+--------------------------------------------------------------------------------
+    for word in probabilities:
+        total = sum(probabilities[word].values())
+        print(word, total)
+--------------------------------------------------------------------------------
+
+2. TEST EXECUTION RESULTS (from first_order_model.py):
+--------------------------------------------------------------------------------
+Conditioning Token (w) | sum_v P(v | w)  | Deviation (|sum - 1|) | Test Status
+--------------------------------------------------------------------------------
+<START>                | 1.00000000      | 0.00e+00              | [PASSED]
+cat                    | 1.00000000      | 0.00e+00              | [PASSED]
+dog                    | 1.00000000      | 0.00e+00              | [PASSED]
+mat                    | 1.00000000      | 0.00e+00              | [PASSED]
+on                     | 1.00000000      | 0.00e+00              | [PASSED]
+park                   | 1.00000000      | 0.00e+00              | [PASSED]
+ran                    | 1.00000000      | 0.00e+00              | [PASSED]
+rug                    | 1.00000000      | 0.00e+00              | [PASSED]
+sat                    | 1.00000000      | 0.00e+00              | [PASSED]
+the                    | 1.00000000      | 0.00e+00              | [PASSED]
+to                     | 1.00000000      | 0.00e+00              | [PASSED]
+---------------------------------------------------------------------------
+OVERALL FIRST-ORDER NORMALIZATION: 100% PASSED
+
+--------------------------------------------------------------------------------
+3. QUESTION 8 AND DETAILED DIAGNOSTIC ANSWER:
+--------------------------------------------------------------------------------
+QUESTION 8:
+"If one of the totals is 0.87, what does this tell you about the implementation?"
+
+ANSWER:
+If sum_v P(v | w) = 0.87 for any conditioning word w, this indicates a SEVERE
+DEFECT in the implementation that violates the fundamental axioms of probability:
+
+1. Violation of Kolmogorov's Second Axiom (Unit Measure):
+   The total probability of the entire sample space conditioned on any event must
+   equal exactly 1:
+       P(Omega | E) = sum_{v in V} P(v | w) = 1.0
+   A sum of 0.87 means exactly 13% (0.13) of the probability mass is missing.
+
+2. Diagnostic Causes of Missing Probability Mass:
+   - Dropped Transitions: The tokenization or counting logic failed to record valid
+     successor tokens (e.g., dropping transitions to the special <END> token, or
+     skipping words with punctuation).
+   - Normalization Denominator Bug: Dividing by an incorrect total (such as the total
+     word count of the entire corpus, or an off-by-one loop counter) instead of the
+     row sum sum_k C(w_i, w_k).
+   - Truncation / Pruning without Re-normalization: If the code applied a threshold
+     cutoff (such as discarding tokens with p < 0.05) or top-k filtering without
+     dividing by the remaining sum, the total will sum to strictly less than 1.0.
+
+3. Impact on Generation:
+   A defective probability distribution that sums to 0.87 will either crash sampling
+   functions (such as numpy.random.choice) or distort generative frequencies, making
+   the model probabilistically invalid.
+================================================================================

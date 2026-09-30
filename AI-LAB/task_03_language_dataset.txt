@@ -1,0 +1,55 @@
+================================================================================
+AI LABORATORY: TASK 3 OUTPUT
+Part III: Build a Small Language Dataset
+================================================================================
+
+1. RAW CORPUS (6 Starting Sentences):
+--------------------------------------------------------------------------------
+Sentence 1: the cat sat on the mat
+Sentence 2: the cat sat on the rug
+Sentence 3: the dog sat on the mat
+Sentence 4: the dog ran to the park
+Sentence 5: the cat ran to the park
+Sentence 6: the dog sat on the rug
+
+2. TOKENIZATION PREPROCESSING:
+- Converted all characters to lowercase.
+- Split sentences on whitespace into individual word tokens.
+- Added special boundary tokens:
+    <START> : Marks the beginning of the sentence
+    <END>   : Marks the end of the sentence
+
+3. TOKENIZED CORPUS WITH BOUNDARY TOKENS:
+--------------------------------------------------------------------------------
+1. <START> the cat sat on the mat <END>
+2. <START> the cat sat on the rug <END>
+3. <START> the dog sat on the mat <END>
+4. <START> the dog ran to the park <END>
+5. <START> the cat ran to the park <END>
+6. <START> the dog sat on the rug <END>
+
+4. CORPUS STATISTICS:
+- Total Sentences: 6
+- Total Tokens (including <START> and <END>): 48
+- Tokens Per Sentence: 8 tokens (uniform length across all sentences)
+- Unique Vocabulary Size (|V|): 12 unique tokens
+
+5. COMPLETE VOCABULARY AND FREQUENCIES:
+--------------------------------------------------------------------------------
+Token        | Count    | Type                
+----------------------------------------------
+the          | 12       | Function Word       
+<END>        | 6        | Special Boundary    
+<START>      | 6        | Special Boundary    
+on           | 4        | Function Word       
+sat          | 4        | Verb                
+cat          | 3        | Noun                
+dog          | 3        | Noun                
+mat          | 2        | Noun                
+park         | 2        | Noun                
+ran          | 2        | Verb                
+rug          | 2        | Noun                
+to           | 2        | Function Word       
+--------------------------------------------------------------------------------
+All text has been properly formatted and validated for probabilistic modeling.
+================================================================================

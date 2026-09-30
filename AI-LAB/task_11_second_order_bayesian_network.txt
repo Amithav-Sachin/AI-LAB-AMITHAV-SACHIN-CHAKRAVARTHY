@@ -1,0 +1,56 @@
+================================================================================
+AI LABORATORY: TASK 11 OUTPUT
+Part XI: A Second-Order Bayesian Network (Question 11)
+================================================================================
+
+1. MATHEMATICAL FORMULATION:
+In a second-order autoregressive language model, each token depends on the TWO
+immediately preceding tokens:
+
+    P(X_t | X_1, ..., X_{t-1}) approx P(X_t | X_{t-2}, X_{t-1})
+
+The corresponding Bayesian Network structure for a sequence of tokens is:
+    [X_{t-2}] ---> [X_t] <--- [X_{t-1}]
+
+For a sequence of four tokens (X_1, X_2, X_3, X_4), the joint factorisation becomes:
+    P(X_1, X_2, X_3, X_4) = P(X_1) * P(X_2 | X_1) * P(X_3 | X_1, X_2) * P(X_4 | X_2, X_3)
+
+--------------------------------------------------------------------------------
+2. QUESTION 11 AND DETAILED MULTI-DIMENSIONAL COMPARISON:
+--------------------------------------------------------------------------------
+QUESTION 11:
+"How does the second-order model differ from the first-order model in terms of:
+ 1. the graph structure?
+ 2. the conditional probability table?
+ 3. the amount of context available for prediction?
+ 4. the amount of data needed?"
+
+ANSWER:
+
+1. Graph Structure:
+   - First-Order: A simple linear chain (X_1 -> X_2 -> X_3 -> ... -> X_T).
+     Each node X_t has an in-degree of 1 (a single parent: Parents(X_t) = {X_{t-1}}).
+   - Second-Order: A Directed Acyclic Graph with skip-1 edges.
+     Each node X_t has an in-degree of 2 (two parents: Parents(X_t) = {X_{t-2}, X_{t-1}}).
+
+2. Conditional Probability Table (CPT):
+   - First-Order: A 2D matrix indexed by (X_{t-1}, X_t) of size |V| x |V|.
+     Each conditioning context is a single word.
+     For |V| = 12, total entries = 12 x 12 = 144.
+   - Second-Order: A 3D tensor indexed by (X_{t-2}, X_{t-1}, X_t) of size |V| x |V| x |V|.
+     Each conditioning context is an ordered pair (bigram) (w_{t-2}, w_{t-1}).
+     For |V| = 12, total entries = 12 x 12 x 12 = 1,728.
+
+3. Amount of Context Available for Prediction:
+   - First-Order: 1 token of context history. The model is blind to whether 'the' was
+     preceded by '<START>', 'on', or 'to'.
+   - Second-Order: 2 tokens of context history. The model conditions on ('on', 'the')
+     versus ('to', 'the') versus ('<START>', 'the'), allowing it to maintain syntactic
+     and semantic consistency.
+
+4. Amount of Data Needed:
+   - First-Order: Scales as O(|V|^2). Requires sufficient data to observe word pairs (bigrams).
+   - Second-Order: Scales as O(|V|^3). Requires exponentially more data to observe word
+     triples (trigrams). In small datasets, the vast majority of possible trigrams will
+     have zero counts (extreme data sparsity).
+================================================================================
