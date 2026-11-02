@@ -1,0 +1,86 @@
+================================================================================
+LABORATORY: LOGICAL REASONING FOR PLANNING
+TASK 3: TEST THE GENERATED PLANNER
+================================================================================
+
+Do not assume that the LLM-generated program is correct.
+We constructed and executed three empirical tests (Test A, Test B, Test C)
+using automated scripts (`test_planner.py` and `verify_plan.py`).
+
+
+1. TEST SUITE DESCRIPTIONS & EXECUTION LOGS
+--------------------------------------------------------------------------------
+
+[TEST A: SOLVABLE PROBLEM (Standard Warehouse Problem)]
+- Objective: Verify that the planner successfully derives a plan transforming
+  the initial warehouse state into a goal state where At(Package, C) is true.
+- Initial State: { At(Robot, A), At(Package, A) }
+- Goal: { At(Package, C) }
+- Actions Available: Move(A,B), Move(B,A), Move(B,C), Move(C,B), PickUp, Drop
+- Outcome: Plan found! (4 actions, 6 search nodes explored)
+- Returned Plan:
+    1. PickUp(Package, A)
+    2. Move(A, B)
+    3. Move(B, C)
+    4. Drop(Package, C)
+- Independent Step Verification:
+    Step 0: S0 = { At(Package, A), At(Robot, A) }
+    Step 1: PickUp(Package, A) applied. S1 = { At(Robot, A), Holding(Package) }  [VALID]
+    Step 2: Move(A, B) applied.         S2 = { At(Robot, B), Holding(Package) }  [VALID]
+    Step 3: Move(B, C) applied.         S3 = { At(Robot, C), Holding(Package) }  [VALID]
+    Step 4: Drop(Package, C) applied.   S4 = { At(Package, C), At(Robot, C) }    [VALID]
+    Goal At(Package, C) in S4: TRUE. Plan is 100% physically valid.
+
+
+[TEST B: IMPOSSIBLE PROBLEM (PickUp Action Removed)]
+- Objective: Verify that when an essential capability is missing, the planner
+  gracefully reports "No plan found" rather than inventing an action or hallucinating.
+- Initial State: { At(Robot, A), At(Package, A) }
+- Goal: { At(Package, C) }
+- Actions Available: Move actions and Drop actions only (PickUp removed).
+- Search Trace:
+    Explored all reachable states:
+    - S0: { At(Robot, A), At(Package, A) }
+    - S1: { At(Robot, B), At(Package, A) }
+    - S2: { At(Robot, C), At(Package, A) }
+    Total unique states visited: 3. Frontier queue emptied.
+- Outcome: "Result: No plan found."
+- Assessment: PASS. The planner respects formal reachability and reports unsolvability.
+
+
+[TEST C: IRRELEVANT ACTIONS (Distractor Actions & Moving Without Package)]
+- Objective:
+  1. Introduce non-essential distractor actions (e.g. InspectSensor, IdleBeep).
+  2. Confirm that shortest-path BFS discards irrelevant actions.
+  3. Verify that the planner does NOT treat the robot reaching location C as
+     equivalent to the package reaching location C.
+- Initial State: { At(Robot, A), At(Package, A) }
+- Goal: { At(Package, C) }
+- Actions Available: Standard actions + IdleBeep + InspectSensor.
+- Search Trace:
+    Reachable states include states where robot moves to C without picking up package:
+    S_robot_at_c = { At(Robot, C), At(Package, A) }
+    Goal check: At(Package, C) in S_robot_at_c? False.
+    The planner does not terminate at S_robot_at_c.
+- Returned Plan:
+    1. PickUp(Package, A)
+    2. Move(A, B)
+    3. Move(B, C)
+    4. Drop(Package, C)
+- Assessment: PASS. BFS filtered out irrelevant actions and correctly required
+  At(Package, C) to be physically true.
+
+
+2. RECORD OF TEST RESULTS (TASK 3 SUMMARY TABLE)
+--------------------------------------------------------------------------------
+Test   | Initial State                | Goal           | Plan Found? | Resulting Plan                       | Actually Valid?
+-------+------------------------------+----------------+-------------+--------------------------------------+-----------------
+Test A | At(Package, A), At(Robot, A) | At(Package, C) | Yes         | [PickUp(Pkg,A), Move(A,B),           | Yes (Verified)
+       |                              |                |             |  Move(B,C), Drop(Pkg,C)]             |
+-------+------------------------------+----------------+-------------+--------------------------------------+-----------------
+Test B | At(Package, A), At(Robot, A) | At(Package, C) | No          | None (Reported "No plan found")      | N/A (Correctly
+       | (PickUp removed)             |                |             |                                      |      rejected)
+-------+------------------------------+----------------+-------------+--------------------------------------+-----------------
+Test C | At(Package, A), At(Robot, A) | At(Package, C) | Yes         | [PickUp(Pkg,A), Move(A,B),           | Yes (Verified)
+       | (Distractor actions added)   |                |             |  Move(B,C), Drop(Pkg,C)]             |
+================================================================================

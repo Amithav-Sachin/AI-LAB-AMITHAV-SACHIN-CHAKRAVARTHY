@@ -1,0 +1,94 @@
+================================================================================
+LABORATORY: LOGICAL REASONING FOR PLANNING
+TASK 7: USING PROLOG TO CHECK A PROPOSED PLAN
+================================================================================
+
+1. PROGRAM EXTENSION
+--------------------------------------------------------------------------------
+The Prolog program `planner.pl` was extended with the verification rule:
+
+```prolog
+valid_move(X, Y) :-
+    connected(X, Y).
+```
+
+In addition, to verify multi-action sequences, a recursive trajectory verifier
+was defined:
+
+```prolog
+valid_move_plan([]).
+valid_move_plan([move(X, Y)]) :-
+    valid_move(X, Y).
+valid_move_plan([move(X, Y), move(Y, Z) | Rest]) :-
+    valid_move(X, Y),
+    valid_move_plan([move(Y, Z) | Rest]).
+```
+
+
+2. VERIFICATION OF PROPOSED ACTIONS
+--------------------------------------------------------------------------------
+Suppose the Python planner proposes the action sequence:
+    Move(a, b), Move(b, c).
+
+We query Prolog to test the validity of each candidate action:
+
+Query 1:
+    ?- valid_move(a, b).
+    Result: true.
+    Explanation: Ground fact connected(a, b) exists in KB.
+
+Query 2:
+    ?- valid_move(b, c).
+    Result: true.
+    Explanation: Ground fact connected(b, c) exists in KB.
+
+Query 3:
+    ?- valid_move(a, c).
+    Result: false.
+    Explanation: No fact connected(a, c) exists in KB.
+
+Full Sequence Query:
+    ?- valid_move_plan([move(a, b), move(b, c)]).
+    Result: true.
+
+
+3. THE CHALLENGE SCENARIO
+--------------------------------------------------------------------------------
+Challenge:
+Now suppose an LLM or an unverified Python planner proposes:
+    Move(a, c).
+
+Query to Prolog:
+    ?- valid_move(a, c).
+    Result: false.
+
+Determination:
+Prolog determines that the proposed action Move(a, c) is NOT supported by the
+warehouse knowledge base.
+Because Prolog operates under the Closed World Assumption, the absence of a direct
+connection edge between 'a' and 'c' means that attempting a direct jump between
+waypoint A and waypoint C violates the physical topology of the warehouse.
+
+The verifier immediately catches the invalid action and halts execution before any
+physical warehouse robot attempts to execute an impossible maneuver.
+
+
+4. "THINK ABOUT IT" ARCHITECTURAL PRINCIPLE
+--------------------------------------------------------------------------------
+Architecture:
+    +---------------------------+         +-------------------------------+
+    |   Candidate Generator     | ------> |    Independent Verifier       |
+    |  (LLM / Python Planner)   |  Plan   |         (Prolog)              |
+    | "Generates candidate move"|         | "Checks domain consistency"   |
+    +---------------------------+         +-------------------------------+
+                                                         |
+                                                         v
+                                              Decision: [Accept / Reject]
+
+Core Insight:
+This decoupled architecture mirrors modern AI safety and formal methods:
+- Generation is heuristic, creative, and exploratory (probabilistic LLM or heuristic search).
+- Verification is strict, deterministic, and sound (formal logic, automated theorem prover, or Prolog KB).
+This ensures that even if the generator hallucinates a shortcut, the logical verifier
+acts as an infallible safety barrier.
+================================================================================

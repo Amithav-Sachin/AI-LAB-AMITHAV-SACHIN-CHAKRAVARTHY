@@ -1,0 +1,85 @@
+================================================================================
+LABORATORY: LOGICAL REASONING FOR PLANNING
+TASK 1: CONSTRUCT A PLAN BY HAND
+================================================================================
+
+1. OBJECTIVE AND REASONING
+--------------------------------------------------------------------------------
+A plan is a sequence of actions [a_1, a_2, ..., a_n] such that:
+    I --a_1--> S_1 --a_2--> S_2 --> ... --> S_n
+where each a_k is applicable in S_{k-1}, and the final state satisfies the goal:
+    S_n |= G
+
+Domain constraints:
+- Initial state: Robot at A, Package at A.
+- Goal: Package at C.
+- Physical connectivity: A <---> B <---> C (no direct corridor between A and C).
+- In order to transport the package, the robot must first pick it up, carry it
+  through intermediate waypoint B to destination C, and release it.
+
+2. STEP-BY-STEP MANUAL PLAN DERIVATION
+--------------------------------------------------------------------------------
+
+Step 0 (Initial State):
+  State S_0: { At(Robot, A), At(Package, A) }
+  Goal check: At(Package, C) in S_0? False.
+  Candidate actions applicable in S_0:
+    - Move(A, B): Robot would leave package behind at A.
+    - PickUp(Package, A): Robot acquires package.
+  Chosen Action: a_1 = PickUp(Package, A)
+
+Step 1 (Execution of PickUp(Package, A)):
+  Preconditions: { At(Robot, A), At(Package, A) }  --> Satisfied in S_0.
+  Effects:
+    - Negative: { At(Package, A) }
+    - Positive: { Holding(Package) }
+  Resulting State S_1 = (S_0 \ {At(Package, A)}) U {Holding(Package)}
+  State S_1: { At(Robot, A), Holding(Package) }
+  Goal check: At(Package, C) in S_1? False.
+  Chosen Action: a_2 = Move(A, B)
+
+Step 2 (Execution of Move(A, B)):
+  Preconditions: { At(Robot, A) }  --> Satisfied in S_1.
+  Effects:
+    - Negative: { At(Robot, A) }
+    - Positive: { At(Robot, B) }
+  Resulting State S_2 = (S_1 \ {At(Robot, A)}) U {At(Robot, B)}
+  State S_2: { At(Robot, B), Holding(Package) }
+  Goal check: At(Package, C) in S_2? False.
+  Chosen Action: a_3 = Move(B, C)
+
+Step 3 (Execution of Move(B, C)):
+  Preconditions: { At(Robot, B) }  --> Satisfied in S_2.
+  Effects:
+    - Negative: { At(Robot, B) }
+    - Positive: { At(Robot, C) }
+  Resulting State S_3 = (S_2 \ {At(Robot, B)}) U {At(Robot, C)}
+  State S_3: { At(Robot, C), Holding(Package) }
+  Goal check: At(Package, C) in S_3? False.
+  Chosen Action: a_4 = Drop(Package, C)
+
+Step 4 (Execution of Drop(Package, C)):
+  Preconditions: { At(Robot, C), Holding(Package) }  --> Satisfied in S_3.
+  Effects:
+    - Negative: { Holding(Package) }
+    - Positive: { At(Package, C) }
+  Resulting State S_4 = (S_3 \ {Holding(Package)}) U {At(Package, C)}
+  State S_4: { At(Robot, C), At(Package, C) }
+  Goal check: At(Package, C) in S_4?
+  { At(Package, C) } subseteq S_4  --> TRUE! Goal Achieved (S_4 |= G).
+
+
+3. STATE TRACE SUMMARY TABLE
+--------------------------------------------------------------------------------
+State | Action Applied       | State Proposition Facts (World Model)
+------+----------------------+--------------------------------------------------
+S_0   | [Initial State]      | { At(Robot, A), At(Package, A) }
+S_1   | PickUp(Package, A)   | { At(Robot, A), Holding(Package) }
+S_2   | Move(A, B)           | { At(Robot, B), Holding(Package) }
+S_3   | Move(B, C)           | { At(Robot, C), Holding(Package) }
+S_4   | Drop(Package, C)     | { At(Robot, C), At(Package, C) }  <-- Goal Met
+
+Derived Optimal Plan:
+  Plan = [PickUp(Package, A), Move(A, B), Move(B, C), Drop(Package, C)]
+  Length: 4 actions.
+================================================================================

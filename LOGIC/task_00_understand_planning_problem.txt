@@ -1,0 +1,113 @@
+================================================================================
+LABORATORY: LOGICAL REASONING FOR PLANNING
+TASK 0: UNDERSTAND THE PLANNING PROBLEM
+================================================================================
+
+1. FORMAL PROBLEM SPECIFICATION: (I, A, G)
+--------------------------------------------------------------------------------
+A planning problem asks an agent to find a sequence of actions that transforms
+an initial state into a desired goal state. The problem is defined formally as
+a triple (I, A, G):
+
+(a) Initial State (I):
+    I = { At(Robot, A), At(Package, A) }
+    Interpretation: Both the warehouse robot and the package are located at
+    warehouse waypoint A. Under the Closed World Assumption (CWA), all other
+    propositions—such as At(Robot, B), At(Robot, C), At(Package, B),
+    At(Package, C), and Holding(Package)—are false.
+
+(b) Goal (G):
+    G = { At(Package, C) }
+    Interpretation: The package must be located at waypoint C. Any final state
+    S_n that satisfies S_n |= G (i.e., At(Package, C) in S_n) is an acceptable
+    goal state. The robot's final position is unconstrained.
+
+(c) Actions Available to the Robot (A):
+    The warehouse environment has three locations {A, B, C} connected as:
+    A <---> B <---> C. Note: A and C are not directly connected.
+    
+    The available ground actions are:
+    1. Move(A, B)
+    2. Move(B, A)
+    3. Move(B, C)
+    4. Move(C, B)
+    5. PickUp(Package, A)
+    6. PickUp(Package, B)
+    7. PickUp(Package, C)
+    8. Drop(Package, A)
+    9. Drop(Package, B)
+    10. Drop(Package, C)
+
+(d) Action Preconditions and Effects (STRIPS Schema):
+    
+    * Move(from, to)  [for (from, to) in {(A,B), (B,A), (B,C), (C,B)}]:
+      - Preconditions:  At(Robot, from)
+      - Positive Effects: At(Robot, to)
+      - Negative Effects: At(Robot, from)
+      
+    * PickUp(Package, loc)  [for loc in {A, B, C}]:
+      - Preconditions:  At(Robot, loc) AND At(Package, loc)
+      - Positive Effects: Holding(Package)
+      - Negative Effects: At(Package, loc)
+      
+    * Drop(Package, loc)  [for loc in {A, B, C}]:
+      - Preconditions:  At(Robot, loc) AND Holding(Package)
+      - Positive Effects: At(Package, loc)
+      - Negative Effects: Holding(Package)
+
+
+2. INITIAL APPLICABILITY ANALYSIS
+--------------------------------------------------------------------------------
+An action a is logically applicable in state S if and only if:
+    S |= Preconditions(a)
+
+Given Initial State:
+    I = { At(Robot, A), At(Package, A) }
+
+Question 1: Is PickUp(Package, A) applicable?
+--------------------------------------------------
+Answer: YES, it is APPLICABLE.
+Explanation:
+The preconditions of PickUp(Package, A) are:
+    Preconditions(PickUp(Package, A)) = { At(Robot, A), At(Package, A) }
+Checking against the initial state I:
+    At(Robot, A) in I       --> TRUE
+    At(Package, A) in I     --> TRUE
+Therefore:
+    I |= Preconditions(PickUp(Package, A))
+The robot and the package are co-located at waypoint A, allowing the robot
+to successfully execute the pickup operation.
+
+Question 2: Is Drop(Package, C) applicable?
+--------------------------------------------------
+Answer: NO, it is NOT APPLICABLE.
+Explanation:
+The preconditions of Drop(Package, C) are:
+    Preconditions(Drop(Package, C)) = { At(Robot, C), Holding(Package) }
+Checking against the initial state I:
+    At(Robot, C) in I       --> FALSE  (Robot is at A, not C)
+    Holding(Package) in I   --> FALSE  (Robot is not holding package)
+Therefore:
+    I |/= Preconditions(Drop(Package, C))
+Neither precondition is met. Attempting to execute Drop(Package, C) in state I
+would violate physical laws of the domain (dropping a package that is not held
+at a location the robot has not reached).
+
+
+3. "THINK ABOUT IT" REFLECTION
+--------------------------------------------------------------------------------
+Insight:
+"An action should not be considered applicable merely because it appears in the
+list of available actions. Ask: Are all of its preconditions satisfied in the
+current state? This is where logical reasoning enters the planning process."
+
+Analysis:
+The domain definition specifies all syntactically conceivable actions (the action
+space A). However, search algorithms cannot blindly apply any action in A.
+Logical entailment acts as the semantic gatekeeper:
+At state S, the agent computes the applicable subset A_applicable(S) subseteq A:
+    A_applicable(S) = { a in A | S |= Preconditions(a) }
+This decouples the static knowledge base (what actions exist in theory) from
+dynamic world states (what actions are physically permissible right now),
+pruning impossible branches before search expands them.
+================================================================================

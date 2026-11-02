@@ -1,0 +1,23 @@
+======================================================================
+PROLOG LOGICAL VERIFICATION TEST SUITE (TASKS 6, 7, 8)
+======================================================================
+
+--- Task 6: Basic Movement Verification ---
+?- can_move(a,b).  ==> true.
+?- can_move(a,c).  ==> false.
+
+--- Task 7: Proposed Plan Action Verification ---
+?- valid_move(a,b). ==> true.
+?- valid_move(b,c). ==> true.
+?- valid_move(a,c). ==> false.
+
+--- Task 7 Extension: Full Plan Trajectory Check ---
+?- valid_move_plan([move(a,b), move(b,c)]). ==> true.
+?- valid_move_plan([move(a,c)]).              ==> false.
+
+--- Task 8: Logical Reasoning Chains (Deductive Modus Ponens) ---
+?- reduce_speed.   ==> true.
+
+======================================================================
+ALL PROLOG VERIFICATION TESTS PASSED SUCCESSFULLY!
+======================================================================

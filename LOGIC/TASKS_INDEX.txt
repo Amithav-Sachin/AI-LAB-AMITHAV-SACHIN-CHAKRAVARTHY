@@ -1,0 +1,36 @@
+================================================================================
+AI LABORATORY: MASTER INDEX OF TASK OUTPUT FILES
+Logical Reasoning for Planning: Using an LLM to Construct and Test a Planning Agent
+================================================================================
+
+Below is the complete directory mapping of individual task output files, source code,
+test scripts, and verification artifacts generated in the LOGIC workspace:
+
+Deliverable File                         | Lab Section | Description
+-----------------------------------------+-------------+-------------------------------------------------------------
+task_00_understand_planning_problem.txt  | Task 0      | Initial state I, Goal G, actions, preconditions/effects, applicability
+task_01_construct_plan_by_hand.txt       | Task 1      | Step-by-step manual plan derivation & state trace S0 -> S4
+task_02_llm_planner_specification.txt    | Task 2      | Exact LLM prompt, implementation details, domain assumptions, code mapping
+task_03_test_generated_planner.txt       | Task 3      | Test A (Solvable), Test B (Impossible), Test C (Irrelevant), Summary Table
+task_04_logic_and_search.txt             | Task 4      | Logic + Search integration, completed execution diagram, analysis
+task_05_llm_plan_verification.txt        | Task 5      | LLM plan justification vs independent mechanical state execution
+task_06_prolog_plan_verifier.txt         | Task 6      | Prolog knowledge base, movement queries can_move/2, questions a/b/c
+task_07_prolog_check_proposed_plan.txt   | Task 7      | Validating Move(a,b), Move(b,c), direct jump challenge Move(a,c)
+task_08_connect_prolog_logical_reasoning | Task 8      | Deductive implication chain: wet_road => slippery => reduce_speed
+task_09_submission_and_reflections.txt   | Sec 4,5,7.2 | Submission checklist, Reflection Questions 1-7, Prolog Questions 1-4
+-----------------------------------------+-------------+-------------------------------------------------------------
+
+CORE EXECUTABLE CODE & SCRIPTS:
+- planner.py                : Pure Python STRIPS planning agent using BFS & proposition sets
+- verify_plan.py            : Independent state-transition and entailment verification engine
+- test_planner.py           : Automated test runner executing Test A, Test B, and Test C
+- planner.pl                : SWI-Prolog knowledge base (warehouse topology, can_move, valid_move)
+- driving_reasoning.pl      : SWI-Prolog knowledge base for Task 8 logical inference chain
+- test_prolog.py            : Automated Python harness running live SWI-Prolog CLI queries
+- run_all_experiments.py    : Master orchestration script executing all Python and Prolog tests
+
+EXECUTION ARTIFACTS & LOGS:
+- test_results.txt                : Complete verbatim console logs from test_planner.py
+- prolog_verification_results.txt : Complete verbatim console logs from test_prolog.py
+- LAB_REPORT.md                   : Comprehensive master academic laboratory report
+================================================================================

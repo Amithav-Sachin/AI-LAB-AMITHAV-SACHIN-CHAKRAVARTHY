@@ -1,0 +1,90 @@
+================================================================================
+LABORATORY: LOGICAL REASONING FOR PLANNING
+TASK 6: PROLOG AS A PLAN VERIFIER
+================================================================================
+
+1. PROLOG KNOWLEDGE BASE DEFINITION (`planner.pl`)
+--------------------------------------------------------------------------------
+The file `planner.pl` was created with the following facts and rule:
+
+```prolog
+% Warehouse Topology (Facts)
+connected(a, b).
+connected(b, a).
+connected(b, c).
+connected(c, b).
+
+% Rule: Movement is allowed between directly connected locations
+can_move(X, Y) :-
+    connected(X, Y).
+```
+
+
+2. QUERIES AND OBSERVED EXECUTION RESULTS
+--------------------------------------------------------------------------------
+Executed using SWI-Prolog (v10.0.2):
+
+Query 1:
+    ?- can_move(a, b).
+    Result: true.
+
+Query 2:
+    ?- can_move(a, c).
+    Result: false.
+
+
+3. ANSWERS TO CONCEPTUAL QUESTIONS
+--------------------------------------------------------------------------------
+
+(a) Why does Prolog return true for can_move(a,b)?
+    Answer:
+    When Prolog evaluates the goal `?- can_move(a, b).`, it unifies the goal with
+    the head of the rule:
+        can_move(X, Y) :- connected(X, Y).
+    with variable substitutions {X = a, Y = b}.
+    This generates the sub-goal `connected(a, b)`.
+    Prolog searches its knowledge base for this atom and encounters the ground
+    fact `connected(a, b).` on line 1.
+    Since the body of the rule is satisfied by an identical ground fact in the
+    knowledge base, the resolution proof succeeds and Prolog returns `true`.
+
+(b) Why does it not establish can_move(a,c)?
+    Answer:
+    When Prolog evaluates `?- can_move(a, c).`, it unifies with the rule, producing
+    the sub-goal `connected(a, c)`.
+    Prolog then searches the knowledge base for `connected(a, c)`.
+    The database only contains:
+        connected(a, b).
+        connected(b, a).
+        connected(b, c).
+        connected(c, b).
+    None of these facts unify with `connected(a, c)`.
+    Under Prolog's Negation as Failure (NAF) and the Closed World Assumption (CWA),
+    any proposition that cannot be proved through finite resolution from the
+    knowledge base is considered false.
+    Because there is no direct corridor between waypoint A and waypoint C, the query
+    fails and Prolog returns `false`.
+
+(c) What is the relationship between the Prolog rule can_move(X,Y) and the
+    logical implication Connected(X, Y) -> CanMove(X, Y)?
+    Answer:
+    The Prolog rule:
+        can_move(X, Y) :- connected(X, Y).
+    is the Horn clause representation of the first-order predicate logic implication:
+        forall X, Y. (Connected(X, Y) -> CanMove(X, Y))
+    
+    In classical propositional/first-order logic, an implication (P -> Q) is
+    logically equivalent to (~P v Q).
+    In clausal normal form (Horn clause), this is written with at most one positive
+    literal:
+        CanMove(X, Y) v ~Connected(X, Y)
+    
+    In Prolog syntax, the head of the clause (the positive conclusion CanMove) is
+    written on the left, and the body (the antecedent condition Connected) is
+    written on the right, separated by `:-` (meaning "if"):
+        Head :- Body.  <===>  Body -> Head.
+    
+    During inference, Prolog uses backward chaining (SLD resolution) to work
+    backwards from conclusion to premise, applying Modus Ponens in reverse to
+    determine whether the antecedent holds.
+================================================================================

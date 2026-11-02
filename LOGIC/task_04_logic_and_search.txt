@@ -1,0 +1,115 @@
+================================================================================
+LABORATORY: LOGICAL REASONING FOR PLANNING
+TASK 4: LOGIC AND SEARCH
+================================================================================
+
+The planning agent synergizes two foundational paradigms of Artificial
+Intelligence:
+    1. LOGICAL REASONING
+    2. STATE-SPACE SEARCH
+
+The central organizing equation of this laboratory is:
+    LOGIC + SEARCH = PLANNING
+
+
+1. WHERE EACH PARADIGM IS USED
+--------------------------------------------------------------------------------
+
+(a) The Logical Component:
+    Role: Local semantic gatekeeper and state transformer.
+    Given a world state S and a candidate action a:
+    1. Applicability Testing:
+       The logical component evaluates whether the state models the action's
+       preconditions:
+           S |= Preconditions(a)
+       If any positive precondition is missing or any negative precondition is
+       present, the action is logically invalid and cannot be fired.
+    2. State Succession:
+       If applicable, logic dictates the exact formal transition to the successor
+       state S' via STRIPS set-update semantics:
+           S' = Apply(S, a) = (S \ NegativeEffects(a)) U PositiveEffects(a)
+    3. Goal Entailment:
+       Logic determines whether a state satisfies the termination criterion:
+           S |= Goal
+
+(b) The Search Component:
+    Role: Global sequential orchestrator and path explorer.
+    Even when logic tells us which individual actions are legal right now, there
+    are typically multiple legal actions available (branching). Logic alone does
+    not know which action leads to the goal or which path is shortest.
+    The search engine (BFS):
+    - Explores the state transition graph.
+    - Manages the frontier queue of unexplored paths.
+    - Tracks visited states to eliminate infinite cycles.
+    - Systematically determines WHICH sequence of logically applicable actions
+      should be explored next.
+
+
+2. COMPLETING THE FLOW DESCRIPTION
+--------------------------------------------------------------------------------
+The laboratory handout asks to complete the following description:
+
+          +-------------------------------+
+          |         Current State         |
+          +-------------------------------+
+                          |
+                          v
+          +-------------------------------+
+          |    Check Action Preconditions |
+          +-------------------------------+
+                          |
+                          v
+          +-------------------------------+
+          |               ?               |
+          +-------------------------------+
+                          |
+                          v
+          +-------------------------------+
+          |   Generate Successor State    |
+          +-------------------------------+
+                          |
+                          v
+          +-------------------------------+
+          |    Search Over Alternatives   |
+          +-------------------------------+
+                          |
+                          v
+          +-------------------------------+
+          |             Goal?             |
+          +-------------------------------+
+
+Question: What fills the '?' box?
+Answer:
+    "Filter / Select Applicable Action(s)"
+    or formally:
+    "Determine Satisfied Actions: { a in A | S |= Preconditions(a) }"
+
+Explanation of the Complete Execution Loop:
+1. Current State: Start from the state currently popped from the BFS queue.
+2. Check Action Preconditions: For each action in domain A, verify S |= Preconditions(a).
+3. Filter Applicable Actions: Discard all actions whose preconditions fail; retain only legal actions.
+4. Generate Successor State: Apply effects S' = Apply(S, a) for each retained action.
+5. Search Over Alternatives: Push unvisited successor states into the search queue (expanding the frontier).
+6. Goal?: Evaluate if S' |= Goal. If true, terminate and return the plan; otherwise, continue searching.
+
+
+3. EXPLANATION IN YOUR OWN WORDS
+--------------------------------------------------------------------------------
+"Logic determines what is possible; search determines what to try."
+
+In an autonomous agent, logic provides the physics and semantics of the universe:
+it guarantees that the robot never walks through walls, never drops a package it
+isn't holding, and never teleports. It defines the exact boundaries of validity.
+
+However, a robot with only logic is paralyzed: it knows all actions that are
+physically permissible right now, but cannot decide between them to achieve a
+future objective.
+
+Search provides directional agency and foresight: it navigates through the tree of
+logically valid possibilities, evaluating candidate futures until it links the
+present to the goal.
+
+Without logic, search would wander into physically impossible fantasies.
+Without search, logic would remain a static catalog of legal next steps without purpose.
+Together, Logic + Search = Intelligent Planning.
+================================================================================

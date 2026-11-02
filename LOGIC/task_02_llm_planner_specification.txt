@@ -1,0 +1,96 @@
+================================================================================
+LABORATORY: LOGICAL REASONING FOR PLANNING
+TASK 2: ASK AN LLM TO IMPLEMENT THE PLANNER
+================================================================================
+
+1. EXACT PROMPT PROVIDED TO THE LLM
+--------------------------------------------------------------------------------
+"I want to implement a simple planning agent in Python.
+Represent a state as a set of logical propositions.
+Each action should contain:
+  • a name;
+  • positive preconditions;
+  • negative preconditions;
+  • positive effects;
+  • negative effects.
+An action is applicable if all of its preconditions are satisfied by the current state.
+When an action is applied:
+  1. remove its negative effects from the state;
+  2. add its positive effects to the state.
+Use breadth-first search to find a sequence of actions that achieves a specified goal.
+The program should also:
+  • detect when no plan exists;
+  • print the resulting sequence of actions;
+  • print the states reached after each action.
+Explain the implementation and identify any assumptions you make.
+Run the generated program on the warehouse problem."
+
+
+2. IMPLEMENTATION EXPLANATION
+--------------------------------------------------------------------------------
+The resulting program was implemented in `planner.py` using Python 3 standard
+library constructs:
+
+(a) Propositional Representation:
+    States are represented as `frozenset` collections of string atoms
+    (e.g., `{"At(Robot, A)", "At(Package, A)"}`). Frozensets provide immutability,
+    constant-time O(1) membership checks, and hashability for visited sets.
+
+(b) Action Modeling (`Action` Class):
+    Each action encapsulates:
+    - `name`: string identifier
+    - `positive_preconditions`: frozenset of required propositions
+    - `negative_preconditions`: frozenset of forbidden propositions
+    - `positive_effects`: propositions added to world state (Add-list)
+    - `negative_effects`: propositions excised from world state (Delete-list)
+
+(c) Applicability Gate (`is_applicable(state)`):
+    Evaluates:
+      1. `positive_preconditions.issubset(state)`
+      2. `len(negative_preconditions.intersection(state)) == 0`
+    If both conditions evaluate to True, S |= Preconditions(a).
+
+(d) Transition Function (`apply(state)`):
+    Applies classical STRIPS set-theoretic semantics:
+      S' = (S \ negative_effects) | positive_effects
+
+(e) Search Engine (`BFSPlanner` Class):
+    Uses `collections.deque` implementing Breadth-First Search (BFS).
+    Each frontier queue element holds `(current_state, action_path, state_history)`.
+    Maintains a `visited` set to prevent cycles and redundant expansions.
+    Because BFS expands nodes in non-decreasing order of path length, it is guaranteed
+    to return a shortest (step-optimal) plan if one exists.
+    If the frontier is exhausted without reaching a state where `goal.issubset(state)`,
+    the algorithm terminates cleanly and reports "No plan found".
+
+
+3. DOMAIN ASSUMPTIONS IDENTIFIED
+--------------------------------------------------------------------------------
+1. Closed World Assumption (CWA): Any proposition not explicitly in the state set
+   is strictly assumed to be false.
+2. Determinism: Actions have completely predictable, deterministic outcomes;
+   there are no stochastic probabilities or nondeterministic branches.
+3. Static Environment: The world state changes exclusively as a result of the
+   agent's actions (no exogenous external events).
+4. Fully Observable: The agent possesses complete, uncorrupted knowledge of all
+   active state propositions at every time step.
+5. Single-Capacity Holding: The robot can hold at most one package at a time.
+
+
+4. "THINK ABOUT IT" MAPPING: SPECIFICATION TO CODE
+--------------------------------------------------------------------------------
+Concept in Theory  | Specification Role                | Implementation in planner.py
+-------------------+-----------------------------------+--------------------------------------------
+Preconditions      | When is an action applicable?     | `Action.is_applicable(state)`
+                   |                                   | checks `pos.issubset(state)` and
+                   |                                   | `neg.isdisjoint(state)`
+-------------------+-----------------------------------+--------------------------------------------
+Effects            | How does the state change?        | `Action.apply(state)` executes:
+                   |                                   | `(state - neg_effects) | pos_effects`
+-------------------+-----------------------------------+--------------------------------------------
+Goal               | When does planning terminate?     | `problem.is_goal_satisfied(state)`
+                   |                                   | checks `goal_conditions.issubset(state)`
+-------------------+-----------------------------------+--------------------------------------------
+BFS                | How are alternative plans         | `BFSPlanner.solve()` uses `deque` to explore
+                   | explored?                         | level-by-level, tracking visited frozensets
+================================================================================

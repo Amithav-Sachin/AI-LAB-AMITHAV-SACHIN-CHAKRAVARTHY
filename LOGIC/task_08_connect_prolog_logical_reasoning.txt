@@ -1,0 +1,96 @@
+================================================================================
+LABORATORY: LOGICAL REASONING FOR PLANNING
+TASK 8: CONNECT PROLOG TO LOGICAL REASONING
+================================================================================
+
+1. PROLOG PROGRAM (`driving_reasoning.pl`)
+--------------------------------------------------------------------------------
+Consider the following knowledge base:
+
+```prolog
+wet_road.
+
+slippery :-
+    wet_road.
+
+reduce_speed :-
+    slippery.
+```
+
+Query:
+    ?- reduce_speed.
+Observed Execution Result:
+    true.
+
+
+2. EXPLANATION OF WHY THE QUERY SUCCEEDS
+--------------------------------------------------------------------------------
+Execution Trace (SLD Resolution / Backward Chaining):
+1. Prolog is tasked with proving the goal: `?- reduce_speed.`
+2. It searches the knowledge base for a matching clause head and finds:
+       reduce_speed :- slippery.
+   To establish `reduce_speed`, it must now prove the body: `slippery`.
+3. Prolog searches for a clause head matching `slippery` and finds:
+       slippery :- wet_road.
+   To establish `slippery`, it must now prove the body: `wet_road`.
+4. Prolog searches for `wet_road` and encounters the ground unit clause:
+       wet_road.
+   This fact has no body (it is unconditionally true).
+5. The goal tree resolves successfully (empty remaining sub-goal list),
+   proving `reduce_speed` is entailed by the knowledge base. Prolog returns `true`.
+
+
+3. LOGICAL REASONING AS A SEQUENCE OF IMPLICATIONS
+--------------------------------------------------------------------------------
+The laboratory handout specifies writing the logical reasoning in the exact form:
+    Fact => Rule => Rule => Conclusion
+
+Step-by-step Deductive Proof:
+
+1. Fact:
+   wet_road is TRUE in the knowledge base.
+   
+2. Forward Modus Ponens Step 1:
+   From Fact [wet_road] and Rule [wet_road -> slippery]:
+       wet_road AND (wet_road -> slippery)  ===>  slippery
+
+3. Forward Modus Ponens Step 2:
+   From derived lemma [slippery] and Rule [slippery -> reduce_speed]:
+       slippery AND (slippery -> reduce_speed)  ===>  reduce_speed
+
+Exact Required Formal Chain:
+    wet_road => (wet_road -> slippery) => (slippery -> reduce_speed) => reduce_speed
+
+
+4. "THINK ABOUT IT": PROLOG VS. CLASSICAL LOGIC
+--------------------------------------------------------------------------------
+Insight:
+"Prolog is useful for illustrating logical reasoning because the programmer specifies
+facts and rules, while the Prolog system performs the inference needed to answer a query.
+However, Prolog should not be regarded as identical to classical logic."
+
+Comparison Dimensions:
+
+1. Declarative vs. Operational Semantics:
+   - Classical Logic: Entailment (KB |= alpha) is purely model-theoretic. If alpha is
+     true in all models of KB, it is entailed. Order of clauses is completely irrelevant.
+   - Prolog: Inference is operational. Prolog uses depth-first search with chronological
+     backtracking and reads rules top-to-bottom, left-to-right. A cyclic rule like
+     `p :- p.` can cause infinite loops in Prolog, whereas in classical logic p is merely
+     a tautology.
+
+2. Negation as Failure (NAF) vs. Classical Negation (~):
+   - Classical Logic: If KB cannot prove P, ~P is NOT necessarily true; P is merely
+     undetermined (Open World Assumption).
+   - Prolog: If a finite SLD search tree fails to prove P, Prolog infers `\+ P` (not P)
+     is true (Closed World Assumption).
+
+3. Fragment of Logic:
+   - Classical Logic encompasses full First-Order Predicate Calculus (disjunctions,
+     existentials, arbitrary negations).
+   - Standard Prolog is restricted to Horn Clauses (clauses with at most one positive
+     literal), which allows linear-time resolution steps via unification.
+
+Summary Pipeline:
+    Facts + Rules ---> Inference Engine (SLD Resolution) ---> Query Answer
+================================================================================

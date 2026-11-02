@@ -1,0 +1,91 @@
+
+======================================================================
+RUNNING TEST A: SOLVABLE PROBLEM (Standard Warehouse Problem)
+======================================================================
+============================================================
+PLANNING REPORT: Test A: Solvable Standard Problem
+============================================================
+Result: Plan found! (Length: 4 actions)
+Search nodes explored: 6
+------------------------------------------------------------
+ACTION SEQUENCE:
+  1. PickUp(Package, A)
+  2. Move(A, B)
+  3. Move(B, C)
+  4. Drop(Package, C)
+------------------------------------------------------------
+STATE TRANSITIONS TRACE:
+  S0 (Initial) : {At(Package, A), At(Robot, A)}
+  --[ PickUp(Package, A) ]-->
+  S1          : {At(Robot, A), Holding(Package)}
+  --[ Move(A, B) ]-->
+  S2          : {At(Robot, B), Holding(Package)}
+  --[ Move(B, C) ]-->
+  S3          : {At(Robot, C), Holding(Package)}
+  --[ Drop(Package, C) ]-->
+  S4          : {At(Package, C), At(Robot, C)}
+============================================================
+
+[Independent Verifier Result for Test A]
+Plan Found: Yes (4 actions)
+Plan Valid: True
+Goal Satisfied: True
+
+======================================================================
+RUNNING TEST B: IMPOSSIBLE PROBLEM (PickUp Action Removed)
+======================================================================
+============================================================
+PLANNING REPORT: Test B: Impossible Problem (No PickUp)
+============================================================
+Result: No plan found.
+Total states explored: 3
+Total unique states visited: 3
+============================================================
+
+[Independent Verifier Result for Test B]
+Plan Found: No (Correctly detected impossible)
+Expected Behavior: Reported 'No plan found' without inventing actions.
+
+======================================================================
+RUNNING TEST C: IRRELEVANT ACTIONS (Distractor actions / Moving without package)
+======================================================================
+============================================================
+PLANNING REPORT: Test C: Irrelevant & Distractor Actions
+============================================================
+Result: Plan found! (Length: 4 actions)
+Search nodes explored: 14
+------------------------------------------------------------
+ACTION SEQUENCE:
+  1. PickUp(Package, A)
+  2. Move(A, B)
+  3. Move(B, C)
+  4. Drop(Package, C)
+------------------------------------------------------------
+STATE TRANSITIONS TRACE:
+  S0 (Initial) : {At(Package, A), At(Robot, A)}
+  --[ PickUp(Package, A) ]-->
+  S1          : {At(Robot, A), Holding(Package)}
+  --[ Move(A, B) ]-->
+  S2          : {At(Robot, B), Holding(Package)}
+  --[ Move(B, C) ]-->
+  S3          : {At(Robot, C), Holding(Package)}
+  --[ Drop(Package, C) ]-->
+  S4          : {At(Package, C), At(Robot, C)}
+============================================================
+
+[Independent Verifier Result for Test C]
+Plan Found: Yes (4 actions)
+Plan Valid: True
+Goal Satisfied: True
+Verified: Irrelevant actions were ignored by shortest-path BFS.
+Verified: Robot reaching C without package does NOT satisfy the goal.
+
+======================================================================
+SUMMARY OF TEST RESULTS (TASK 3 RECORD TABLE)
+======================================================================
+Test       | Initial State                    | Goal               | Found?   | Valid?  
+-------------------------------------------------------------------------------------
+Test A     | At(Package, A), At(Robot, A)     | At(Package, C)     | Yes      | True    
+Test B     | At(Package, A), At(Robot, A)     | At(Package, C)     | No       | N/A (Correctly rejected)
+Test C     | At(Package, A), At(Robot, A)     | At(Package, C)     | Yes      | True    
+======================================================================
