@@ -1,0 +1,43 @@
+======================================================================
+TASK 5: COMPARING A* WITH BLIND SEARCH (BFS)
+======================================================================
+
+[Scenario A: Original Warehouse (Constrained Corridor - 64 Free Cells)]
+Measure                   | BFS (Blind)     | A* (Informed)  
+------------------------------------------------------------
+Solution Found            | True            | True           
+Path Length               | 40              | 40             
+States Expanded           | 64              | 64             
+------------------------------------------------------------
+Key Finding: In a single winding corridor with 64 total free cells and no
+alternative branches, both algorithms must traverse the corridor, expanding 64 states.
+
+[Scenario B: Branching/Open Warehouse (Branching Factor > 1)]
+Measure                   | BFS (Blind)     | A* (Informed)  
+------------------------------------------------------------
+Solution Found            | True            | True           
+Path Length               | 20              | 20             
+States Expanded           | 85              | 85             
+------------------------------------------------------------
+Heuristic Impact: A* reduces state expansions by 0 states (0.0% reduction)!
+======================================================================
+
+======================================================================
+TASK 6: HEURISTIC SENSITIVITY INVESTIGATION
+======================================================================
+[Scenario A: Original Warehouse Benchmark]
+Heuristic Function        | Found?   | Path Length  | States Expanded  | Admissible? 
+--------------------------------------------------------------------------------
+Manhattan (Baseline)      | True     | 40           | 64               | Yes         
+Zero Heuristic h(n)=0     | True     | 40           | 64               | Yes         
+Euclidean Distance        | True     | 40           | 64               | Yes         
+Scaled 2*Manhattan        | True     | 40           | 64               | No (Overest)
+
+[Scenario B: Branching Open Warehouse Benchmark]
+Heuristic Function        | Found?   | Path Length  | States Expanded  | Admissible? 
+--------------------------------------------------------------------------------
+Manhattan (Baseline)      | True     | 20           | 85               | Yes         
+Zero Heuristic h(n)=0     | True     | 20           | 85               | Yes         
+Euclidean Distance        | True     | 20           | 81               | Yes         
+Scaled 2*Manhattan        | True     | 20           | 21               | No (Overest)
+================================================================================

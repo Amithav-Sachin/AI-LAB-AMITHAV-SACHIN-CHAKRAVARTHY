@@ -1,0 +1,81 @@
+
+======================================================================
+RUNNING TEST 1: ORIGINAL WAREHOUSE BENCHMARK
+======================================================================
+Algorithm: A* (Manhattan)
+Status: Solution Found
+Path Length: 40
+Total Cost: 40.0
+States Expanded: 64
+
+Visualized Solution Trajectory:
+#################
+#S****#*********#
+#.###*#*#######*#
+#...#*#*******#*#
+###.#*#######*#*#
+#...#*********#*#
+#.###########.#*#
+#.............#G#
+#################
+
+======================================================================
+RUNNING TEST 2: TRIVIAL CASE (Immediately Adjacent Goal)
+======================================================================
+Algorithm: A* (Manhattan)
+Status: Solution Found
+Path Length: 1
+Total Cost: 1.0
+States Expanded: 2
+
+Visualized Path:
+#####
+#SG##
+#####
+-> Verified: Successfully found one-step solution immediately.
+
+======================================================================
+RUNNING TEST 3: NO SOLUTION (Completely Inaccessible Goal)
+======================================================================
+Algorithm: A* (Manhattan)
+Status: No Solution Found
+Path Length: 0
+Total Cost: inf
+States Expanded: 9
+-> Verified: Successfully terminated and reported failure without looping.
+
+======================================================================
+RUNNING TEST 4: ALTERNATIVE PATHS (Short vs Long Route)
+======================================================================
+A* Result:
+Algorithm: A* (Manhattan)
+Status: Solution Found
+Path Length: 8
+Total Cost: 8.0
+States Expanded: 9
+
+A* Path:
+###########
+#S*******G#
+#.#######.#
+#.........#
+###########
+
+BFS Ground Truth Result:
+Algorithm: BFS
+Status: Solution Found
+Path Length: 8
+Total Cost: 8
+States Expanded: 17
+-> Verified: Returned optimal shortest path of length 8.
+
+===========================================================================
+SUMMARY MATRIX OF SYSTEMATIC TESTS (TASK 3)
+===========================================================================
+Test            | Solution Found?  | Path Length  | States Expanded 
+---------------------------------------------------------------------------
+Test 1 (Orig)   | True             | 40           | 64              
+Test 2 (Triv)   | True             | 1            | 2               
+Test 3 (None)   | False            | N/A          | 9               
+Test 4 (Alt)    | True             | 8            | 9               
+===========================================================================

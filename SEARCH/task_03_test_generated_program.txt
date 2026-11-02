@@ -1,0 +1,95 @@
+================================================================================
+LABORATORY: SEARCH AND A*
+TASK 3: TEST THE GENERATED PROGRAM
+================================================================================
+
+Do not assume that the generated code is correct.
+We constructed and executed a systematic battery of four distinct empirical tests
+using `test_search.py`.
+
+
+1. EMPIRICAL TEST DESCRIPTIONS & OUTCOMES
+--------------------------------------------------------------------------------
+
+[TEST 1: ORIGINAL WAREHOUSE BENCHMARK]
+- Map: 17x9 warehouse with winding corridors and interior shelf blocks.
+- Start: (1, 1), Goal: (7, 15).
+- Solution Found: True
+- Path Length: 40 steps
+- States Expanded: 64
+- Path Trajectory: Optimal corridor navigation from S, looping through columns,
+  down row 7 into delivery area G.
+
+[TEST 2: TRIVIAL CASE (Immediately Adjacent Goal)]
+- Map:
+    #####
+    #SG##
+    #####
+- Start: (1, 1), Goal: (1, 2).
+- Expected Behavior: Immediate 1-step solution.
+- Observed Output:
+    - Solution Found: True
+    - Path Length: 1 step: [(1, 1), (1, 2)]
+    - States Expanded: 2 (Start, then Goal)
+- Assessment: PASS. Handles minimal base case without off-by-one errors.
+
+[TEST 3: NO SOLUTION (Completely Inaccessible Goal)]
+- Map:
+    #######
+    #S....#
+    ###.###
+    #...#G#
+    #######
+- Start: (1, 1), Goal: (3, 5).
+- Note: The goal cell is enclosed by walls ('#'); no walkable path exists.
+- Expected Behavior: Must terminate gracefully and report failure without looping.
+- Observed Output:
+    - Solution Found: False
+    - Path Length: 0
+    - States Expanded: 9 (all reachable free cells on start's side)
+- Assessment: PASS. Frontier queue exhausts cleanly; handles unsolvability.
+
+[TEST 4: ALTERNATIVE PATHS (Short vs. Long Route)]
+- Map:
+    ###########
+    #S.......G#
+    #.#######.#
+    #.........#
+    ###########
+- Description: The map contains two distinct routes from S (1, 1) to G (1, 9):
+    1. Short Route: Direct passage along row 1 (length = 8 steps).
+    2. Long Route: Detour down around the shelf through row 3 (length = 12 steps).
+- Expected Behavior: A* must find the optimal (shortest) path.
+- Observed Output:
+    - A* Path Length: 8 steps
+    - A* States Expanded: 9 states
+    - BFS Ground Truth Path Length: 8 steps (17 states expanded)
+- Assessment: PASS. A* strictly derived the shortest path.
+
+
+2. SUMMARY MATRIX OF SYSTEMATIC TESTS (TASK 3 RECORD TABLE)
+--------------------------------------------------------------------------------
+Test Scenario   | Map Dimensions | Solution Found? | Path Length | States Expanded | Verdict
+----------------+----------------+-----------------+-------------+-----------------+--------
+Test 1 (Orig)   | 17 x 9         | True            | 40          | 64              | PASS
+Test 2 (Triv)   | 5 x 3          | True            | 1           | 2               | PASS
+Test 3 (None)   | 7 x 5          | False           | N/A         | 9               | PASS
+Test 4 (Alt)    | 11 x 5         | True            | 8           | 9               | PASS
+----------------+----------------+-----------------+-------------+-----------------+--------
+
+
+3. "THINK ABOUT IT" REFLECTION
+--------------------------------------------------------------------------------
+Insight:
+"A program that produces a plausible path is not necessarily correct.
+Testing should deliberately include cases in which the expected behaviour is known.
+This is an important principle of AI engineering:
+    Working output != validated algorithm"
+
+Analysis:
+A broken search algorithm (e.g., greedy best-first search, depth-first search, or
+an inadmissible A* variant) will frequently output a path that looks valid on a
+single test map. Only by testing boundary extremes (trivial 1-step, impossible walls,
+competing path lengths) can an engineer mathematically prove that the algorithm
+implements true optimal A* search.
+================================================================================

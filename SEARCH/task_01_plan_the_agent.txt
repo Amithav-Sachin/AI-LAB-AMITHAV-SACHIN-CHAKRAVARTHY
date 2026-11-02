@@ -1,0 +1,74 @@
+================================================================================
+LABORATORY: SEARCH AND A*
+TASK 1: PLAN THE AGENT
+================================================================================
+
+Before prompting an LLM for code, the software architecture of the search agent
+was planned in detail:
+
+1. ARCHITECTURAL DESIGN SPECIFICATION
+--------------------------------------------------------------------------------
+
+1. State Representation in Python:
+   A state is represented as an integer tuple `(r, c)` corresponding to
+   `(row_index, col_index)`. Tuples are immutable, lightweight, and natively
+   hashable in Python, allowing direct use in sets and dictionaries.
+
+2. Warehouse Representation:
+   The ASCII grid is parsed into a `GridEnvironment` class storing:
+   - `raw_map`: list of strings representing the grid layout.
+   - `height` and `width`: dimensions of the matrix.
+   - `start`: coordinate tuple `(r, c)` of 'S'.
+   - `goal`: coordinate tuple `(r, c)` of 'G'.
+   - `obstacles`: Python `set` of coordinate tuples `(r, c)` representing '#'.
+     Set membership allows O(1) collision detection.
+
+3. Valid Action Determination:
+   A helper method `get_neighbors(pos)` iterates through candidate moves:
+   `[(-1, 0), (1, 0), (0, -1), (0, 1)]` (Up, Down, Left, Right).
+   A candidate `(nr, nc)` is valid if:
+     `0 <= nr < height and 0 <= nc < width and (nr, nc) not in obstacles`
+
+4. Goal Recognition:
+   The agent checks whether the current state extracted from the frontier
+   strictly equals the goal state: `current == self.goal`.
+   Goal checking is performed when a node is POPPED from the priority queue
+   (rather than when generated), which is a fundamental requirement to guarantee
+   optimality in A* graph search.
+
+5. Frontier Storage & Priority Queue:
+   The frontier is implemented as a min-heap using Python's `heapq` module.
+   Each element in the heap is a tuple:
+       `(f_score, tie_breaker_counter, state, g_score)`
+   The unique integer `tie_breaker_counter` prevents Python from attempting
+   direct comparison between `state` tuples when f-scores are identical.
+
+6. Path Reconstruction:
+   A dictionary `parent_map: Dict[Coord, Optional[Coord]]` records the optimal
+   predecessor of each visited node (`parent_map[child] = parent`).
+   When the goal is reached, the path is reconstructed by following parent
+   pointers backwards from `goal` to `start`, and reversing the resulting list.
+
+
+2. MINIMUM REPORTING METRICS
+--------------------------------------------------------------------------------
+When the search program terminates, it must report:
+• Whether a solution was found (boolean status)
+• The solution path (ordered sequence of coordinates)
+• The path length (number of transitions)
+• The number of states expanded (nodes popped from frontier)
+• The total path cost
+
+
+3. "THINK ABOUT IT" REFLECTION
+--------------------------------------------------------------------------------
+Insight:
+"This task is deliberately performed before prompting the LLM. You are designing
+the agent. The LLM is being used later as an engineering tool to help translate
+your design into code."
+
+Analysis:
+The human engineer holds full responsibility for algorithmic correctness, data
+structure selection, and boundary conditions. The LLM serves as a syntax accelerator,
+implementing the designed data flow rather than inventing arbitrary architecture.
+================================================================================

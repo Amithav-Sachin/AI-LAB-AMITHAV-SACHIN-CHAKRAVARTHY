@@ -1,0 +1,102 @@
+================================================================================
+LABORATORY: SEARCH AND A*
+TASK 6: INVESTIGATE THE HEURISTIC
+================================================================================
+
+1. WHY MANHATTAN DISTANCE IS APPROPRIATE
+--------------------------------------------------------------------------------
+Manhattan distance:
+    h(n) = |r - r_G| + |c - c_G|
+
+Explanation:
+In this warehouse, the robot's physical movement is restricted to 4 cardinal
+directions (Up, Down, Left, Right); diagonal movement is strictly prohibited.
+Every single step advances the robot by +/-1 in row or +/-1 in column.
+
+In AI theory, an admissible heuristic is derived by relaxing the constraints of the
+original problem. If we remove all obstacle shelves ('#') from the warehouse, the
+minimum number of cardinal steps required to travel between two points (r, c) and
+(r_G, c_G) is precisely the L1 norm: |r - r_G| + |c - c_G|.
+Because the relaxed problem path length is always less than or equal to the actual
+path length with obstacles present:
+    h_Manhattan(n) <= h*(n)  (Admissible)
+    h_Manhattan(n) <= c(n, n') + h_Manhattan(n')  (Consistent / Monotonic)
+Therefore, Manhattan distance is the natural, maximally informative relaxed-problem
+heuristic for 4-connected grid navigation.
+
+
+2. EXPERIMENTAL INVESTIGATION OF HEURISTIC VARIANTS
+--------------------------------------------------------------------------------
+We investigated four heuristic configurations:
+1. Manhattan Distance (Standard Baseline)
+2. Zero Heuristic h(n) = 0 (Uniform Cost Search / Dijkstra)
+3. Euclidean Distance: h(n) = sqrt((r - r_G)^2 + (c - c_G)^2)
+4. Scaled Heuristic: h(n) = 2 * Manhattan (Weighted / Inadmissible A*)
+
+[A. Original Warehouse Map (Constrained Corridor - 64 Free Cells)]
+Heuristic Variant         | Solution Found? | Path Length | States Expanded | Admissible?
+--------------------------+-----------------+-------------+-----------------+-------------
+Manhattan (Baseline)      | True            | 40          | 64              | Yes
+Zero Heuristic h(n) = 0   | True            | 40          | 64              | Yes
+Euclidean Distance        | True            | 40          | 64              | Yes
+Scaled 2 * Manhattan      | True            | 40          | 64              | No (Overest)
+
+[B. Open / Branching Warehouse Map (Revealing Heuristic Differentiation)]
+Heuristic Variant         | Solution Found? | Path Length | States Expanded | Admissible?
+--------------------------+-----------------+-------------+-----------------+-------------
+Manhattan (Baseline)      | True            | 20          | 85              | Yes
+Zero Heuristic h(n) = 0   | True            | 20          | 85              | Yes
+Euclidean Distance        | True            | 20          | 81              | Yes
+Scaled 2 * Manhattan      | True            | 20          | 21              | No (Overest)
+
+
+3. ANALYSIS OF EXPERIMENTAL QUESTIONS
+--------------------------------------------------------------------------------
+
+1. What happens if the heuristic is replaced by h(n) = 0?
+   - With h(n) = 0, the evaluation function collapses to f(n) = g(n) + 0 = g(n).
+   - The algorithm degenerates from A* into Uniform Cost Search (Dijkstra's Algorithm).
+   - In unweighted graphs with uniform edge costs (c = 1), this is equivalent to BFS.
+   - It is guaranteed to be optimal, but expands nodes uniformly in all directions
+     without any goal orientation.
+
+2. What happens if the heuristic is replaced by Euclidean distance?
+   - Euclidean distance measures straight-line distance: sqrt((dr)^2 + (dc)^2).
+   - Because a straight line is the shortest geometric distance, Euclidean distance
+     is strictly admissible: h_Euclidean(n) <= h_Manhattan(n) <= h*(n).
+   - However, because diagonal steps are illegal in a 4-connected grid, Euclidean
+     distance strictly underestimates the true relaxed grid distance (e.g., for a
+     1x1 move, Euclidean = 1.414, but true grid steps = 2).
+   - Because h_Euclidean is "less informed" (dominated by Manhattan), it expands
+     a slightly different frontier profile. On open grids, it expanded 81 states
+     versus 85.
+
+3. What happens if the heuristic is multiplied by 2?
+   - The evaluation function becomes f(n) = g(n) + 2 * h(n).
+   - This represents Weighted A* (with weight w = 2.0).
+   - The heuristic becomes INADMISSIBLE because it frequently overestimates the true
+     remaining cost to the goal (h(n) > h*(n)).
+   - Consequence on efficiency: The search becomes hyper-focused and aggressive,
+     prioritizing goal-directed forward expansion like a beam search. In our open
+     benchmark, states expanded collapsed from 85 down to only 21 states (75.3% reduction!).
+   - Consequence on optimality: In general domains with obstacle traps, an inadmissible
+     heuristic can cause A* to return a sub-optimal path. In our test case, the shortest
+     path remained 20, but optimality is bounded within w * C* = 2 * C*.
+
+
+4. "THINK ABOUT IT" REFLECTION
+--------------------------------------------------------------------------------
+Insight:
+"The lecture introduced admissibility: h(n) <= h*(n).
+Ask yourself: What happens to the behaviour of A* when the heuristic becomes too
+optimistic or too aggressive?"
+
+Conclusion:
+- When h(n) is too optimistic (severely underestimates h*(n), e.g. h=0):
+  The search remains strictly optimal, but loses pruning power. It expands an
+  excessive number of nodes, behaving like an exhaustive blind search.
+- When h(n) is too aggressive (overestimates h*(n), e.g. 2*h(n)):
+  The search runs dramatically faster, expanding far fewer nodes. However, it
+  surrenders mathematical guarantees of step optimality, risking returning a
+  longer detour if an obstacle blocks the greedy trajectory.
+================================================================================

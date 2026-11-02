@@ -1,0 +1,32 @@
+================================================================================
+AI LABORATORY: MASTER INDEX OF TASK OUTPUT FILES
+Search and A*: Using an LLM as an Engineering Assistant
+================================================================================
+
+Below is the directory mapping of individual task output files, source code,
+test scripts, and verification artifacts generated in the SEARCH workspace:
+
+Deliverable File                         | Lab Section | Description
+-----------------------------------------+-------------+-------------------------------------------------------------
+task_00_understand_search_problem.txt    | Task 0      | Formal problem P=(S,A,T,s0,G,c), state granularity, validity, determinism
+task_01_plan_the_agent.txt               | Task 1      | Agent architectural design before prompting LLM, frontier data structures
+task_02_llm_astar_specification.txt      | Task 2      | Exact LLM prompt, implementation details, code components, initial test
+task_03_test_generated_program.txt       | Task 3      | Systematic tests: Original, Trivial (1-step), No Solution, Alternative Paths
+task_04_inspect_astar_algorithm.txt      | Task 4      | Concept-to-code mapping table, data structures, evaluation function analysis
+task_05_compare_astar_with_bfs.txt       | Task 5      | BFS vs A* benchmark, 64-cell corridor analysis, branching map comparison
+task_06_investigate_the_heuristic.txt    | Task 6      | Manhattan justification, ablation (Zero, Euclidean, Scaled 2*Manhattan)
+task_07_evaluate_llm_generated_agent.txt | Task 7      | Critical evaluation of LLM engineering, bug discovery, accountability table
+task_08_submission_and_final_reflections | Sec 5 & 6   | Submission checklist, Final Reflection Questions 1-5, central AI lesson
+-----------------------------------------+-------------+-------------------------------------------------------------
+
+CORE EXECUTABLE CODE & SCRIPTS:
+- search_agent.py           : GridEnvironment, A* Search (Manhattan, Euclidean, Zero, Scaled), BFS
+- test_search.py            : Systematic test suite executing Tests 1, 2, 3, and 4
+- compare_algorithms.py     : Benchmark runner for BFS vs A* and Heuristic sensitivity analysis
+- run_all_experiments.py    : Master orchestration runner executing all tests and benchmarks
+
+EXECUTION ARTIFACTS & LOGS:
+- test_results.txt                 : Complete verbatim console logs from test_search.py
+- heuristic_comparison_results.txt : Complete verbatim console logs from compare_algorithms.py
+- LAB_REPORT.md                    : Comprehensive master academic laboratory report
+================================================================================

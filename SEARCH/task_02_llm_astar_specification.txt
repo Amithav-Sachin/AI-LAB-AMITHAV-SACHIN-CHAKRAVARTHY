@@ -1,0 +1,64 @@
+================================================================================
+LABORATORY: SEARCH AND A*
+TASK 2: ASK AN LLM TO GENERATE A*
+================================================================================
+
+1. EXACT PROMPT BASED ON TASK 1 DESIGN
+--------------------------------------------------------------------------------
+"I am implementing a simple goal-based search agent in Python.
+The environment is a grid represented by an ASCII map. The agent starts at S
+and must reach G. The symbols # represent obstacles and . represents free cells.
+The agent can move up, down, left, or right, and every movement has cost 1.
+Implement A* search.
+Use Manhattan distance as the heuristic:
+    h(n) = |x - xG| + |y - yG|.
+The program should:
+  • represent grid positions as states;
+  • maintain an appropriate frontier;
+  • calculate g(n), h(n) and f(n);
+  • avoid repeatedly expanding the same state;
+  • reconstruct the path when the goal is reached;
+  • report the path and its length;
+  • report the number of states expanded.
+Keep the implementation simple and explain the main components of the code."
+
+
+2. IMPLEMENTED PYTHON ARCHITECTURE (`search_agent.py`)
+--------------------------------------------------------------------------------
+The generated program translates this specification into modular components:
+
+(a) `GridEnvironment` Class:
+    - Parses input multi-line ASCII strings.
+    - Extracts `start`, `goal`, and `obstacles` coordinates.
+    - Implements `get_neighbors(pos)` enforcing grid boundaries and obstacle avoidance.
+    - Implements `render_path(path)` overlaying '*' on free cells for visual verification.
+
+(b) Heuristic Functions:
+    - `manhattan_heuristic(pos, goal)`: Calculates L1 distance:
+          h(pos) = abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])
+    - Additional pluggable heuristics for subsequent tasks (`euclidean_heuristic`,
+      `zero_heuristic`, `scaled_manhattan_heuristic`).
+
+(c) `a_star_search(env, heuristic_fn)`:
+    - Implements A* graph search using `heapq` as a min-priority queue.
+    - Stores `(f_score, counter, current_state, g_score)`.
+    - Tracks `g_scores: Dict[Coord, float]` recording the minimum known cost to each state.
+    - Tracks `closed_set: Set[Coord]` recording states that have been expanded.
+    - Goal test executed on pop: `if current == goal`.
+    - Reconstructs path via `parent_map` back-pointers.
+
+(d) `SearchResult` Data Class:
+    - Encapsulates execution telemetry: `algorithm`, `found`, `path`, `path_length`,
+      `states_expanded`, and `cost`.
+
+
+3. RUNNING ON THE WAREHOUSE MAP
+--------------------------------------------------------------------------------
+Executing `search_agent.py` on the original warehouse map yielded:
+- Algorithm: A* (Manhattan)
+- Status: Solution Found
+- Path Length: 40 steps
+- Total Cost: 40.0
+- States Expanded: 64
+- Path Trajectory: Successfully routes from (1, 1) through the corridors to (7, 15).
+================================================================================

@@ -1,0 +1,86 @@
+================================================================================
+LABORATORY: SEARCH AND A*
+TASK 4: INSPECT THE A* ALGORITHM
+================================================================================
+
+1. CONCEPT MAPPING TABLE
+--------------------------------------------------------------------------------
+Below is the precise mapping from formal search theory concepts to their
+corresponding code constructs in `search_agent.py`:
+
+Concept              | Where Does It Appear in the Code?
+---------------------+----------------------------------------------------------
+State                | Represented as a coordinate tuple `(r, c)` of type `Coord`
+                     | within `GridEnvironment` and `a_star_search`.
+---------------------+----------------------------------------------------------
+Action               | Encapsulated in the delta offset vectors inside
+                     | `GridEnvironment.get_neighbors(pos)`:
+                     | `[("Up", (-1, 0)), ("Down", (1, 0)), ...]`
+---------------------+----------------------------------------------------------
+Transition           | Computed in `get_neighbors(pos)` as `(r + dr, c + dc)`
+                     | followed by validation check `self.is_valid(nxt)`.
+---------------------+----------------------------------------------------------
+Goal test            | Executed upon popping node from priority queue:
+                     | `if current == goal:` (Line 160 of `search_agent.py`).
+---------------------+----------------------------------------------------------
+g(n)                 | Maintained in `g_scores: Dict[Coord, float]` and updated
+                     | via `tentative_g = g + 1.0` (Line 175).
+---------------------+----------------------------------------------------------
+h(n)                 | Computed by `h = heuristic_fn(neighbor, goal)`
+                     | (Line 183). Default: `manhattan_heuristic`.
+---------------------+----------------------------------------------------------
+f(n)                 | Explicitly evaluated as `f_score = tentative_g + h`
+                     | (Line 184).
+---------------------+----------------------------------------------------------
+Frontier             | Implemented as a min-heap list `frontier = [...]` managed
+                     | with `heapq.heappush` and `heapq.heappop`.
+---------------------+----------------------------------------------------------
+Visited states       | Tracked by `closed_set: Set[Coord]` (states expanded) and
+                     | `g_scores` dictionary (best-known path costs).
+---------------------+----------------------------------------------------------
+Path reconstruction  | Implemented using `parent_map: Dict[Coord, Optional[Coord]]`
+                     | by tracing back from `goal` to `start` via `curr = parent_map[curr]`.
+---------------------+----------------------------------------------------------
+
+
+2. DETAILED ANSWERS TO INSPECTION QUESTIONS
+--------------------------------------------------------------------------------
+
+(a) What data structure is used for the A* frontier?
+    Answer:
+    A priority queue implemented as a binary min-heap via Python's standard library
+    `heapq` module over a standard Python list. The elements are 4-tuples:
+        `(f_score, tie_breaker_counter, state, g_score)`
+    where `f_score` is the primary key determining min-extraction priority.
+
+(b) How does the program select the next state to expand?
+    Answer:
+    Using `heapq.heappop(frontier)`. The min-heap guarantees that the node with the
+    lowest evaluation value f(n) = g(n) + h(n) across the entire frontier is
+    extracted in O(log N) time. If multiple nodes share identical f-scores, the
+    `tie_breaker_counter` breaks ties chronologically (FIFO order).
+
+(c) Where is the heuristic calculated?
+    Answer:
+    The heuristic is calculated in two places:
+    1. Initially for the start node prior to search loop: `start_h = heuristic_fn(start, goal)`.
+    2. During neighbor expansion when generating unvisited or improved successor nodes:
+       `h = heuristic_fn(neighbor, goal)` right before computing `f_score`.
+
+(d) Does the program explicitly calculate f(n) = g(n) + h(n)?
+    Answer:
+    YES. On line 184 of `search_agent.py`, the code contains the explicit line:
+        `f_score = tentative_g + h`
+    where `tentative_g` represents g(n') and `h` represents h(n').
+
+(e) How does the program prevent unnecessary repeated exploration?
+    Answer:
+    Through two complementary mechanisms:
+    1. `closed_set: Set[Coord]`: Records every node that has been popped and expanded.
+       If a duplicate node in the frontier is popped whose state is already in `closed_set`,
+       it is immediately discarded via `if current in closed_set: continue`.
+    2. `g_scores: Dict[Coord, float]`: When considering a neighbor, the program checks:
+       `if neighbor not in g_scores or tentative_g < g_scores[neighbor]:`
+       This prevents pushing neighbor nodes into the heap unless a strictly cheaper
+       path to that state has been discovered.
+================================================================================

@@ -1,0 +1,86 @@
+================================================================================
+LABORATORY: SEARCH AND A*
+TASK 7: EVALUATE THE LLM-GENERATED AGENT
+================================================================================
+
+1. EVALUATION QUESTIONS AND CRITICAL REFLECTION
+--------------------------------------------------------------------------------
+
+1. What parts of the generated code were correct immediately?
+   - The basic mathematical definitions of Manhattan and Euclidean distance.
+   - Parsing the multi-line ASCII string into rows and columns.
+   - The standard heapq `heappush` and `heappop` loop mechanics.
+   - The dictionary-based parent pointer tracing for path reconstruction.
+
+2. Did you find any bugs or design problems?
+   - Yes, two critical architectural pitfalls:
+     (a) Heap Tuple Tie-Breaking Bug: When pushing `(f_score, state)` directly into
+         the priority queue, if two states have identical f-scores, Python's `heapq`
+         attempts to compare `state_a < state_b`. For coordinate tuples this happens
+         to compare coordinates, but if an object or non-comparable struct is used,
+         Python throws a `TypeError: '<' not supported between instances`.
+     (b) Premature Goal Check: LLMs frequently place the goal check inside the
+         neighbor expansion loop (`if neighbor == goal: return`). In A* graph search,
+         checking the goal at generation rather than expansion breaks the optimality
+         guarantee when edge costs or heuristics vary.
+     (c) Inadequate Closed Set Handling: Some LLM implementations use a single `visited`
+         set without checking if a newly found path to an open node has a lower g-score.
+
+3. How did you discover those problems?
+   - Through code inspection against formal AI theory (Task 4) and empirical testing
+     on the alternative paths map (Test 4 in `test_search.py`), where premature goal
+     checks cause sub-optimal path selection.
+
+4. Did the LLM use terminology or data structures that you did not understand?
+   - No. Standard data structures were used: `heapq` (binary min-heap), `deque` (double-
+     ended FIFO queue), `set` (hash table for O(1) membership), and `dict` (hash map
+     for parent back-pointers and g-scores).
+
+5. Did you modify the LLM-generated code?
+   - Yes:
+     1. Added an explicit incrementing integer `counter` to heap tuples
+        `(f_score, counter, state, g_score)` to guarantee deterministic tie-breaking.
+     2. Ensured the goal check occurs strictly upon `heappop` when the node is expanded.
+     3. Parameterized the heuristic function as a callable argument to enable
+        clean ablation benchmarking across Manhattan, Euclidean, Zero, and Scaled variants.
+
+6. Which tests were most useful?
+   - Test 3 (No Solution): Verified that the search terminates gracefully on graph
+     disconnection rather than hanging in an infinite loop.
+   - Test 4 (Alternative Paths): Verified that A* returned the strictly minimal 8-step
+     path rather than taking a greedy 12-step detour.
+
+7. Could you have trusted the program without testing it?
+   - Absolutely NOT. An LLM-generated program can generate code that runs without
+     throwing syntax errors and outputs a plausible-looking path on a simple visual map,
+     while violating core mathematical invariants of A* (such as optimality guarantees
+     or admissibility requirements).
+
+8. What did you understand about A* that you did not understand before implementing it?
+   - The profound impact of environment topology on heuristic effectiveness. In an
+     unconstrained grid, heuristics achieve massive pruning; but in a constrained
+     labyrinth corridor (like the original warehouse map), even a perfect heuristic
+     cannot prune any nodes because all reachable cells lie on the sole valid path.
+
+
+2. ARCHITECTURAL ACCOUNTABILITY TABLE
+--------------------------------------------------------------------------------
+Dimension              | Content / Details
+-----------------------+--------------------------------------------------------
+1. What you designed   | The formal search problem P = (S, A, T, s0, G, c),
+   yourself            | state representation as (r, c) tuples, test matrix
+                       | (trivial, blocked, alternative paths), metric reporting.
+-----------------------+--------------------------------------------------------
+2. What the LLM        | Initial class scaffold for `GridEnvironment`,
+   suggested           | standard Python `heapq` and `deque` loops, string map parsing.
+-----------------------+--------------------------------------------------------
+3. What you accepted   | Use of standard Python libraries (`heapq`, `math`, `collections`),
+                       | coordinate tuple representation, parent map dictionary.
+-----------------------+--------------------------------------------------------
+4. What you changed    | Enforced goal check on pop (expansion), inserted tie-breaker
+                       | counters into priority queue, abstracted heuristic interfaces.
+-----------------------+--------------------------------------------------------
+5. What you tested     | Base case (1-step), impossible barrier (unsolvable),
+                       | competing routes (optimality), heuristic ablation (h=0,
+                       | Euclidean, 2*Manhattan), blind search comparison (BFS).
+================================================================================

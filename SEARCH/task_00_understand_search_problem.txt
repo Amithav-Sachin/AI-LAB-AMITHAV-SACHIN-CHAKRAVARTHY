@@ -1,0 +1,91 @@
+================================================================================
+LABORATORY: SEARCH AND A*
+TASK 0: UNDERSTAND THE SEARCH PROBLEM
+================================================================================
+
+1. FORMAL SEARCH PROBLEM SPECIFICATION: P = (S, A, T, s0, G, c)
+--------------------------------------------------------------------------------
+Before writing any code, the warehouse navigation problem is rigorously
+formulated as a classical search problem P = (S, A, T, s0, G, c):
+
+Component        | Your Specification
+-----------------+--------------------------------------------------------------
+State S          | The discrete coordinate tuple (r, c) representing the robot's
+                 | current position on the grid, where 0 <= r < height and
+                 | 0 <= c < width, and (r, c) is a walkable free cell (not an
+                 | obstacle '#').
+-----------------+--------------------------------------------------------------
+Actions A        | The set of 4 cardinal directional movements:
+                 | A = { Up, Down, Left, Right }
+                 | Formally represented as delta vectors:
+                 |   Up    = (-1, 0)
+                 |   Down  = (+1, 0)
+                 |   Left  = (0, -1)
+                 |   Right = (0, +1)
+-----------------+--------------------------------------------------------------
+Transition T     | Deterministic transition function T: S x A -> S
+                 | T((r, c), (dr, dc)) = (r + dr, c + dc)
+                 | The transition is legally defined if and only if the resulting
+                 | position is within map boundaries and is not an obstacle.
+-----------------+--------------------------------------------------------------
+Initial State s0 | The coordinate of the loading area marked by symbol 'S'.
+                 | For the original warehouse map, s0 = (1, 1).
+-----------------+--------------------------------------------------------------
+Goal G           | The singleton target set containing the coordinate of the
+                 | delivery area marked by symbol 'G'.
+                 | For the original warehouse map, G = { (7, 15) }.
+-----------------+--------------------------------------------------------------
+Cost c           | Uniform step cost function c(s, a, s') = 1 for every legal
+                 | transition. Total path cost equals the total number of steps.
+-----------------+--------------------------------------------------------------
+
+
+2. QUESTIONS AND ANSWERS
+--------------------------------------------------------------------------------
+
+(a) What information is necessary to specify a state?
+    Answer:
+    Only the robot's discrete 2D spatial coordinate (r, c) on the grid is
+    necessary. Because the warehouse environment is static, fully observable, and
+    memoryless (the cost and legality of future moves depend strictly on the
+    current cell, not how the robot arrived there), no velocity, orientation, or
+    temporal information is needed in the state descriptor.
+
+(b) What makes an action invalid?
+    Answer:
+    An action a in A applied at state (r, c) is invalid if:
+    1. Boundary Violation: The resulting coordinate (r + dr, c + dc) falls
+       outside the grid dimensions (r < 0 or r >= height or c < 0 or c >= width).
+    2. Obstacle Collision: The target cell is occupied by a warehouse obstacle
+       (grid[r + dr][c + dc] == '#').
+
+(c) Is this a deterministic search problem?
+    Answer:
+    YES. The search problem is fully deterministic. Applying action a in state s
+    always results in exactly one predictable successor state s' with probability
+    1.0. There is no actuator slip, sensory noise, or non-deterministic branching.
+
+(d) What would constitute a solution?
+    Answer:
+    A solution is an ordered sequence of legal actions <a1, a2, ..., ak> (or
+    corresponding sequence of coordinates <s0, s1, s2, ..., sk>) such that:
+    1. s0 is the initial start coordinate 'S';
+    2. For every step i in {1, ..., k}, s_i = T(s_{i-1}, a_i) is valid;
+    3. The terminal state satisfies the goal condition: s_k in G (at 'G').
+    An optimal solution is a solution that minimizes total path cost sum(c) = k.
+
+
+3. "THINK ABOUT IT" REFLECTION
+--------------------------------------------------------------------------------
+Insight:
+"Do not ask an LLM for code yet. The purpose of this task is to separate
+understanding the problem from implementing the solution. If you cannot clearly
+specify the search problem, generating code is premature."
+
+Analysis:
+In software and AI engineering, premature code generation without a rigorous
+formal specification leads to architectural defects, fragile boundary handling,
+and flawed termination logic. Formulating P = (S, A, T, s0, G, c) beforehand
+establishes the exact mathematical invariant against which any LLM-generated code
+must be evaluated.
+================================================================================
