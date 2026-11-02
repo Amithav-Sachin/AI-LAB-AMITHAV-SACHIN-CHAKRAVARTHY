@@ -1,0 +1,30 @@
+======================================================================
+TEST 1: STANDARD WAREHOUSE NAVIGATION (A* vs BFS)
+======================================================================
+Algorithm       | Plan Found?  | Path Length  | Nodes Expanded  
+------------------------------------------------------------
+A* (Manhattan)  | True         | 20           | 23              
+BFS (Blind)     | True         | 20           | 59              
+
+Visualized Trajectory (* = Path):
+#####################
+#S****#************G#
+#.##.***##########..#
+#....##.............#
+#.######.###.#.###..#
+#........#..........#
+#####################
+
+======================================================================
+TEST 2: UNREACHABLE GOAL (Blocked Map Handling)
+======================================================================
+Goal Found: False
+Nodes Expanded Before Exhaustion: 60
+-> Verified: Successfully reported no path exists without infinite loops.
+
+======================================================================
+TEST 3: STEP-BY-STEP PLAN EXECUTION
+======================================================================
+Executed 20 steps successfully.
+Final Agent Position: (1, 19) (Target: (1, 19))
+-> Verified: Execution reached delivery bay G successfully.

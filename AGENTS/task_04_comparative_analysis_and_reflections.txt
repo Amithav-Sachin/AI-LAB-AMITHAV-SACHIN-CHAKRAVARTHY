@@ -1,0 +1,48 @@
+================================================================================
+LABORATORY: AGENTS
+TASK 4: COMPARATIVE ANALYSIS & CRITICAL REFLECTIONS
+================================================================================
+
+1. AGENT ARCHITECTURE COMPARISON: REFLEX VS GOAL-BASED VS UTILITY-BASED
+--------------------------------------------------------------------------------
+
+Dimension             | Simple Reflex Agent          | Goal-Based Agent (This Lab)  | Utility-Based Agent
+----------------------+------------------------------+------------------------------+----------------------------------
+Internal World Model  | None (purely reactive)       | Explicit map coordinates &   | Explicit map & probabilistic
+                      |                              | obstacle boundaries          | belief distributions
+----------------------+------------------------------+------------------------------+----------------------------------
+Decision Mechanism    | Condition-Action rules       | Search / Planning over       | Utility function U(s) optimizing
+                      | (e.g. IF obstacle THEN turn) | candidate action sequences   | speed, energy, battery, safety
+----------------------+------------------------------+------------------------------+----------------------------------
+Goal Representation   | None (implicit in rules)     | Explicit target state 'G'    | Multi-objective utility values
+                      |                              | predicate (is_goal(pos))     | mapping states to real numbers
+----------------------+------------------------------+------------------------------+----------------------------------
+Flexibility to Change | Very Poor (requires editing  | Excellent (simply update     | Outstanding (adapts to varying
+                      | all rule condition blocks)   | goal coordinates 'G')        | energy, cost, and priority trade-offs)
+----------------------+------------------------------+------------------------------+----------------------------------
+Susceptibility to     | Extreme (frequently traps in | None (systematic search      | None (evaluates expected utility
+Dead Ends / Loops     | infinite oscillation cycles) | detects loops and detours)   | over complete planning horizon)
+
+
+2. CRITICAL EVALUATION OF THE LLM AS A SOFTWARE ENGINEERING TOOL
+--------------------------------------------------------------------------------
+
+Strengths Identified:
+1. Rapid Prototyping: Generated a complete, working Python script with grid parsing,
+   search logic, and path visualization within seconds.
+2. Conceptual Translation: Accurately translated theoretical search concepts (heuristic
+   admissibility, Manhattan distance) into idiomatic Python code.
+3. Code Clarity: Produced well-commented functions with clear variable names.
+
+Limitations & Vulnerabilities Identified:
+1. Monolithic Bias: LLMs tend to write single-file scripts mixing UI, environment physics,
+   and agent reasoning unless explicitly prompted for modular object-oriented design.
+2. Silent Flaws in Edge Cases: Without strict prompts, an LLM might place the goal check
+   inside the expansion loop (breaking A* optimality) or fail to handle disjoint maps.
+3. Unverified Claims: An LLM will confidently assert that code is "fully optimal" without
+   having run empirical unit tests to verify the claim.
+
+The Fundamental Engineering Lesson:
+    "An LLM is an assistant, not an oracle.
+     The engineer remains responsible for specification, design, testing, and validation."
+================================================================================

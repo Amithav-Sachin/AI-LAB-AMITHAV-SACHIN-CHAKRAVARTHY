@@ -1,0 +1,25 @@
+================================================================================
+AI LABORATORY: MASTER INDEX OF TASK OUTPUT FILES
+Agents: Constructing a Goal-Based Agent using a Large Language Model
+================================================================================
+
+Below is the directory mapping of individual task output files, source code,
+test scripts, and verification artifacts generated in the AGENTS workspace:
+
+Deliverable File                         | Lab Section | Description
+-----------------------------------------+-------------+-------------------------------------------------------------
+task_01_understanding_the_problem.txt    | Task 1      | Questions 1-5, PEAS specification, scaling to 2x warehouse
+task_02_designing_the_agent.txt          | Task 2      | 5 agent components, Russell & Norvig block diagram, decoupling
+task_03_prompt_engineering_and_eval.txt  | Task 3      | Prompt used, questions 1-4, iterative prompt engineering, A* rationale
+task_04_comparative_analysis_and_ref.txt | Synthesis   | Reflex vs Goal-Based vs Utility-Based agent, LLM engineering critique
+-----------------------------------------+-------------+-------------------------------------------------------------
+
+CORE EXECUTABLE CODE & SCRIPTS:
+- goal_based_agent.py       : Complete implementation of WarehouseEnvironment and GoalBasedAgent (A* & BFS)
+- test_agent.py             : Automated test suite (Standard warehouse benchmark, blocked map, step execution)
+- run_all_experiments.py    : Master runner executing all agent tests and logging outputs
+
+EXECUTION ARTIFACTS & LOGS:
+- agent_execution_results.txt : Complete verbatim console logs from test_agent.py
+- LAB_REPORT.md               : Comprehensive master academic laboratory report
+================================================================================

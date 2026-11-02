@@ -1,0 +1,102 @@
+================================================================================
+LABORATORY: AGENTS
+TASK 2: DESIGNING THE AGENT
+================================================================================
+
+1. IDENTIFICATION OF AGENT COMPONENTS
+--------------------------------------------------------------------------------
+Before prompting an LLM for code, the architectural design of the goal-based
+agent is specified across five fundamental dimensions:
+
+1. The Environment:
+   A 2D discrete grid world parsing an ASCII matrix of dimensions 21 columns by
+   7 rows. Encapsulated in Python as `WarehouseEnvironment`. Stores obstacle sets,
+   boundary constraints, start coordinate S = (1, 1), and goal coordinate G = (1, 19).
+
+2. The Current State:
+   A discrete spatial coordinate tuple `(r, c)` where 0 <= r < 7 and 0 <= c < 21,
+   representing the exact location of the vehicle on a free floor tile.
+
+3. The Goal:
+   A designated target position `G = (1, 19)`. The goal condition is a predicate
+   `is_goal(pos) = (pos == (1, 19))` evaluating whether the agent has reached
+   the dispatch bay.
+
+4. The Available Actions:
+   Four primitive transition operators: `Up` (-1, 0), `Down` (+1, 0), `Left` (0, -1),
+   `Right` (0, +1). Each action is validated against environment collision rules:
+   `is_valid_coordinate(r + dr, c + dc)`.
+
+5. The Decision-Making Component:
+   A state-space planning engine implementing heuristic search (A* with Manhattan
+   distance) and blind search (BFS). The component maintains a priority queue of
+   candidate trajectories, projects future states using an internal world model,
+   and synthesizes an optimal sequence of actions before execution begins.
+
+
+2. GOAL-BASED AGENT ARCHITECTURE BLOCK DIAGRAM
+--------------------------------------------------------------------------------
+Based on the classic Russell & Norvig Goal-Based Agent model:
+
+                        +-----------------------+
+                        |      ENVIRONMENT      |
+                        |   (Warehouse Grid)    |
+                        +-----------------------+
+                                    |
+                                    | Percepts: Current Position (r, c)
+                                    v
+                        +-----------------------+
+                        |        SENSORS        |
+                        +-----------------------+
+                                    |
+                                    v
++-------------------------------------------------------------------------------+
+|                             GOAL-BASED AGENT                                  |
+|                                                                               |
+|  +------------------------+                                                   |
+|  |   What the world is    | <------- Transition Model & Environment Layout   |
+|  |       like now         |          (Obstacle Map & Free Cells)              |
+|  +------------------------+                                                   |
+|              |                                                                |
+|              v                                                                |
+|  +------------------------+          +-------------------------+              |
+|  |   What it will be like | <------> |          GOALS          |              |
+|  | if I do action A, B... |          |  (Destination Bay 'G')  |              |
+|  +------------------------+          +-------------------------+              |
+|              |                                    |                           |
+|              v                                    v                           |
+|  +-------------------------------------------------------------+              |
+|  |                    PLANNING / SEARCH ENGINE                 |              |
+|  |           (Evaluates candidate paths using A* / BFS)         |              |
+|  +-------------------------------------------------------------+              |
+|                                  |                                            |
+|                                  v                                            |
+|                  +-------------------------------+                            |
+|                  |  What action I should do now  |                            |
+|                  +-------------------------------+                            |
++-------------------------------------------------------------------------------+
+                                    |
+                                    | Selected Action (Up, Down, Left, Right)
+                                    v
+                        +-----------------------+
+                        |       ACTUATORS       |
+                        +-----------------------+
+                                    |
+                                    | Physical Motion
+                                    v
+                        +-----------------------+
+                        |      ENVIRONMENT      |
+                        +-----------------------+
+
+
+3. KEY ARCHITECTURAL DISTINCTIONS
+--------------------------------------------------------------------------------
+1. Decoupled Planning from Execution:
+   The agent does not reactively stumble through the warehouse; it plans an entire
+   path offline within its internal model, verifies feasibility, and then executes
+   the path reliably.
+2. Goal Flexibility:
+   If the destination changes from G (1, 19) to any arbitrary bay (e.g. (5, 12)),
+   the agent does not require reprogramming or new rules. It simply updates its
+   goal parameter, and the planning engine derives a new collision-free trajectory.
+================================================================================

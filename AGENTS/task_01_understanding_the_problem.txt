@@ -1,0 +1,104 @@
+================================================================================
+LABORATORY: AGENTS
+TASK 1: UNDERSTANDING THE PROBLEM
+================================================================================
+
+1. CORE QUESTIONS AND DETAILED ANSWERS
+--------------------------------------------------------------------------------
+
+Question 1: What is the environment?
+Answer:
+The environment is a discrete, two-dimensional 21x7 grid warehouse representing
+a physical storage facility. The environment contains:
+- Walkable free floor spaces ('.') where the vehicle can traverse;
+- Fixed, impassable shelving units and structural walls ('#') acting as obstacles;
+- A designated loading bay starting position ('S') located at coordinate (1, 1);
+- A designated dispatch bay delivery area ('G') located at coordinate (1, 19).
+From an AI classification standpoint, the environment is:
+- Fully Observable: The agent has complete access to the static map and its position.
+- Deterministic: Actions execute with 100% certainty; no slip or stochastic noise.
+- Static: The warehouse obstacles and goals do not move dynamically over time.
+- Discrete: Positions, actions, and time steps are discrete grid units.
+- Single-Agent: Only one autonomous vehicle operates in the space.
+
+Question 2: What is the goal of the agent?
+Answer:
+The goal is an explicit state description: to maneuver the autonomous warehouse
+vehicle from its initial loading position 'S' to the target dispatch position 'G'
+along a collision-free path that completely avoids all shelving obstacles ('#'),
+ideally minimizing total movement steps (cost).
+
+Question 3: What actions are available to the agent?
+Answer:
+The agent possesses 4 discrete cardinal spatial movement actions:
+- Up    : Decrement row coordinate by 1  (r - 1, c)
+- Down  : Increment row coordinate by 1  (r + 1, c)
+- Left  : Decrement column coordinate by 1 (r, c - 1)
+- Right : Increment column coordinate by 1 (r, c + 1)
+Each movement advances the vehicle by exactly one grid square with a uniform cost of 1.
+
+Question 4: What information must the agent maintain in order to choose its next action?
+Answer:
+To choose its next action intelligently, the agent must maintain:
+1. Current State: Its current coordinates (r, c) on the grid.
+2. Goal State: The coordinates of destination 'G' (1, 19).
+3. World Model / Map Representation: The locations of all boundaries and shelving units ('#')
+   to predict "what the world will look like if I take action a" (transition model).
+4. Search Frontier and Visited Memory: Accumulated past path costs g(n), projected
+   heuristic distance h(n), and the list of previously explored nodes to prevent cycles.
+5. Planned Trajectory: The remaining sequence of planned actions leading to the goal.
+
+Question 5: Why is this an example of a goal-based agent rather than a simple reflex agent?
+Answer:
+A simple reflex agent operates strictly on Condition-Action rules of the form:
+    IF [current percept matches condition] THEN [execute action]
+A reflex agent has no explicit representation of a future destination or "what it is
+trying to achieve." If placed in front of an obstacle, a reflex agent cannot plan a detour
+because it cannot project the long-term consequences of turning left vs. right. It easily
+gets trapped in infinite loops or local minima.
+In contrast, a goal-based agent:
+1. Possesses an explicit target state ('G');
+2. Combines its internal world model with goal information to simulate possible future
+   action sequences (search/planning);
+3. Evaluates candidate actions based on whether they bring the agent closer to achieving
+   the goal;
+4. Can seamlessly adapt to new goals simply by changing the target coordinates without
+   rewriting any underlying behavioral rules.
+
+
+2. PEAS SPECIFICATION FOR THE WAREHOUSE AGENT
+--------------------------------------------------------------------------------
+- Performance Measure: Minimum path length (steps), zero collisions with shelves,
+  time to formulate plan.
+- Environment: 21x7 discrete warehouse grid with fixed obstacle layout.
+- Actuators: 4-directional motion controller (Up, Down, Left, Right).
+- Sensors: Grid localization sensor providing current (row, column) coordinate percept.
+
+
+3. "THINK ABOUT IT" REFLECTION: SCALING TO 2X WAREHOUSE SIZE
+--------------------------------------------------------------------------------
+Question:
+Suppose the warehouse becomes twice as large. Would the same search strategy
+still be appropriate? What additional difficulties might arise?
+
+Analysis:
+1. Impact on State Space and Search Complexity:
+   Doubling the dimensions (e.g. from 21x7 to 42x14) quadruples the area (from 147
+   to 588 cells). In grid search, the branching factor b is up to 4. For blind search
+   (BFS), time and memory complexity grow as O(b^d), where d is the solution depth.
+   As d doubles from ~20 to ~40 steps, BFS memory requirements explode exponentially.
+   
+2. Search Strategy Appropriateness:
+   - Blind Search (BFS) becomes completely inappropriate due to memory exhaustion.
+   - Informed Search (A* with Manhattan Heuristic) remains highly effective because
+     the heuristic guides the search beam toward the goal, pruning the majority of
+     the expanded search tree.
+   
+3. Additional Difficulties That Arise:
+   - Long Detours & Local Minima: Larger warehouses often feature long shelf corridors.
+     If a direct corridor is blocked far ahead, heuristic search may explore deep into
+     a dead-end corridor before realizing it must backtrack all the way around.
+   - Dynamic Obstacles: In a large commercial facility, human pickers and other AGVs
+     introduce dynamic obstacles, rendering static offline planning insufficient and
+     requiring real-time replanning (e.g., D* Lite or Hierarchical A*).
+================================================================================
