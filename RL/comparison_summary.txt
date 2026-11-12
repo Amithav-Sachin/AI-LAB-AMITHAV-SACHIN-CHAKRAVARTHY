@@ -1,0 +1,12 @@
+================================================================================
+MASTER CONTROLLER COMPARISON TABLE (TASK 8)
+================================================================================
+
+Measure                        | Tabular Q (1 Robot)  | DQN (1 Robot)      | DQN (2 Robots)    
+--------------------------------------------------------------------------------------------
+Budget & Seed                  | 1,500 ep, Seed 7     | 12,000 st, Seed 7  | 60,000 st, Seed 7 
+Success / Collision / Timeout  | Success (100%)       | Success (100%)     | Timeout (40 steps)
+Steps, if successful           | 4 steps (Optimal)    | 4 steps (Optimal)  | N/A (B arrived t=4)
+Invalid Moves                  | 0                    | 0                  | 0                 
+Evaluation Return              | +9.70                | +9.70              | +1.00             
+Additional Start Test          | Pass (6 steps)       | Pass (6 steps)     | Timeout (0 coll)  

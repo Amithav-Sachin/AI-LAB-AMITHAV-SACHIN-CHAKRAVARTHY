@@ -1,0 +1,33 @@
+================================================================================
+TABULAR Q-LEARNING EXPERIMENTAL LOGS
+================================================================================
+
+GREEDY EVALUATION RESULTS:
+  Start: (2, 0)
+  Goal Reached: True
+  Path Length: 4 steps
+  Total Return: 9.70
+  Invalid Moves: 0
+  Path: [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4)]
+  Actions: ['Right', 'Right', 'Right', 'Right']
+
+ASCII GRID TRAJECTORY:
+  Col: 0 1 2 3 4
+     +----------+
+ r0 | . . # . . |
+ r1 | . . # . . |
+ r2 | S 1 2 3 G |
+ r3 | . . # . . |
+ r4 | . . # . . |
+     +----------+
+
+RANDOM POLICY BENCHMARK (100 Runs):
+  Success Rate: 15.0%
+  Timeout Rate: 85.0%
+  Mean Steps (if successful): 27.6
+  Mean Invalid Moves: 9.82
+  Mean Return: -11.14
+
+NO-EXPLORATION ABLATION (Epsilon = 0, Seed 7):
+  Goal Reached: True
+  Steps: 4

@@ -1,0 +1,73 @@
+================================================================================
+CS F407: REINFORCEMENT LEARNING AND DEEP RL LABORATORY
+TASK 9 (SECTION 8.1): CONNECT THE EXERCISE TO RLHF
+================================================================================
+
+Reinforcement Learning from Human Feedback (RLHF) replaces or augments hardcoded
+reward heuristics with a preference-learned reward model.
+
+--------------------------------------------------------------------------------
+1. THE THREE CORE STAGES OF RLHF IN WAREHOUSE ROBOT COORDINATION
+--------------------------------------------------------------------------------
+
+1. What Feedback People Would Provide:
+   - Rather than assigning explicit scalar numbers to every transition, human evaluators
+     are shown pairs of completed trajectory rollouts: Trajectory Sigma_1 vs. Trajectory Sigma_2.
+   - Evaluators express a qualitative comparative preference:
+         Sigma_1 >~ Sigma_2  (or Sigma_2 >~ Sigma_1, or equal preference).
+   - Humans prefer trajectories that:
+     * Avoid uncomfortably close proximity or rapid near-misses near the doorway;
+     * Eliminate wasteful idling or excessive stalling once a path is clear;
+     * Demonstrate natural courtesy (e.g., smoothly yielding in an alcove rather
+       than erratic back-and-forth jitter).
+   - This produces a dataset D = {(Sigma_1^(i), Sigma_2^(i), y^(i))} of pairwise comparisons.
+
+2. What a Learned Reward Model Would Predict:
+   - A parameterized neural network R_psi(s, a) (or R_psi(tau)) is trained on the
+     pairwise preference dataset using the Bradley-Terry preference model:
+         P(Sigma_1 > Sigma_2) = sigma( sum_{t} R_psi(s_1,t, a_1,t) - sum_{t} R_psi(s_2,t, a_2,t) ),
+     where sigma(z) = 1 / (1 + e^{-z}) is the sigmoid function.
+   - The reward model learns a latent scoring function that assigns higher cumulative
+     scalar values to trajectories exhibiting smooth, socially efficient coordination
+     and penalizes subtle inefficiencies (like hesitant waiting or aggressive posturing)
+     without requiring an engineer to hand-tune numerical penalty coefficients.
+
+3. How an RL Agent Would Use That Reward Model:
+   - In the subsequent policy optimization phase (e.g., using PPO or DQN), the agent
+     interacts with the warehouse environment.
+   - Instead of receiving a hand-engineered reward r = -0.1 - b + 5k, the agent
+     queries the frozen reward model:
+         r_t = R_psi(s_t, a_t).
+   - The RL algorithm uses these predicted rewards to compute TD errors, update its
+     Q-values, and steer its policy toward behaviors that maximize human-preferred
+     trajectory attributes.
+
+--------------------------------------------------------------------------------
+2. HAND-WRITTEN PENALTY EDITING VS. PREFERENCE REWARD MODELING
+--------------------------------------------------------------------------------
+Question:
+Does editing the hand-written collision penalty train a reward model? Explain why this
+is fundamentally different from learning a reward from preferences.
+
+Answer:
+NO, manually editing the hand-written collision penalty does NOT train a reward model:
+
+1. Hand-Tuning is Manual Rule Engineering:
+   - Modifying a scalar parameter (e.g., changing collision penalty from -10 to -50)
+     is manual heuristic tweaking by an engineer.
+   - No data is collected, no loss function is minimized, no statistical model is
+     parameterized, and no preference generalization takes place.
+   - It relies entirely on the developer's intuition and often leads to unintended
+     pathologies (such as the robot choosing to freeze forever to completely eliminate
+     any risk of incurring the severe penalty).
+
+2. Learning from Preferences is Supervised Reward Modeling:
+   - Training a reward model in RLHF is a machine learning process:
+     * It fits a function approximator R_psi to empirical behavioral judgments from
+       human annotators.
+     * It captures implicit, high-dimensional trade-offs that are virtually impossible
+       to write down in a simple piecewise formula (e.g., balancing transit speed,
+       safe following distance, and minimal disturbance).
+     * The reward model generalizes to unseen states and trajectories based on learned
+       features rather than fixed hardcoded thresholds.
+================================================================================

@@ -1,0 +1,12 @@
+================================================================================
+SINGLE-ROBOT DQN EXPERIMENTAL LOGS
+================================================================================
+
+GREEDY EVALUATION RESULTS:
+  Start: (2, 0)
+  Goal Reached: True
+  Path Length: 4 steps
+  Total Return: 9.70
+  Invalid Moves: 0
+  Path: [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4)]
+  Actions: ['Right', 'Right', 'Right', 'Right']

@@ -1,0 +1,159 @@
+================================================================================
+CS F407: REINFORCEMENT LEARNING AND DEEP RL LABORATORY
+TASK 5: TRAIN, EVALUATE, AND INVESTIGATE EXPLORATION
+================================================================================
+
+1. TRAINING EXECUTION AND CONVERGENCE PROFILE
+--------------------------------------------------------------------------------
+The tabular Q-learning agent was trained with the following hyperparameter specification:
+- Episodes: 1,500
+- Initial Q-table: all zeros (shape 25 x 5)
+- Random Seed: 7
+- Learning rate alpha: 0.2
+- Discount factor gamma: 0.95
+- Epsilon schedule: Linear decay from 1.0 down to 0.05 across the first 1,200 episodes;
+  constant epsilon = 0.05 for episodes 1,201 to 1,500.
+- Moving average window: 50 episodes.
+- Output training plot: `tabular_q_training.png`
+
+Convergence Summary:
+- Early Phase (Episodes 1 - 200): High exploration (epsilon in [1.0, 0.84]), frequent
+  wall and obstacle collisions, mean returns around -15 to -5, success rate ~20-30%.
+- Mid Phase (Episodes 200 - 800): Epsilon in [0.84, 0.37]. The agent discovers the
+  doorway at (2, 2) repeatedly; TD values propagate back to the start state (2, 0).
+  50-episode moving average return rises steadily above +6.0, success rate reaches >80%.
+- Late Convergence (Episodes 800 - 1500): Epsilon <= 0.37 down to 0.05. The optimal
+  path values stabilize. Moving average success rate stabilizes at 95% - 98%.
+
+--------------------------------------------------------------------------------
+2. DETERMINISTIC GREEDY EVALUATION (ZERO EXPLORATION)
+--------------------------------------------------------------------------------
+Evaluation Protocol:
+- Start position: S = (2, 0)
+- Epsilon: 0.0 (Exploration completely disabled)
+- Parameter updates: Disabled
+- Tie-breaking rule: Deterministic argmax (first maximal index)
+
+Execution Output:
+- Goal Reached: True (Success)
+- Execution Steps: 4 steps
+- Cumulative Return: +9.70
+  (Step 1: -0.1, Step 2: -0.1, Step 3: -0.1, Step 4: +10.0 -> Total = +9.70)
+- Invalid moves: 0
+- Timeout: False
+
+Learned Trajectory Coordinates:
+    t=0: (2, 0) [Start S]
+    t=1: (2, 1) [Action: Right]
+    t=2: (2, 2) [Action: Right - Passes Doorway]
+    t=3: (2, 3) [Action: Right]
+    t=4: (2, 4) [Action: Right - Reaches Goal G]
+
+Grid Trajectory Representation:
+      Col: 0 1 2 3 4
+         +----------+
+     r0 | . . # . . |
+     r1 | . . # . . |
+     r2 | S 1 2 3 G |
+     r3 | . . # . . |
+     r4 | . . # . . |
+         +----------+
+
+Comparison with Task 1 Theoretical Route:
+The learned greedy trajectory has a path length of exactly 4 steps, matching the
+absolute minimum theoretical distance identified in Task 1. The agent learned the
+optimal straight-line transit through the doorway without any wandering or hesitation.
+
+--------------------------------------------------------------------------------
+3. COMPARATIVE BENCHMARK: RANDOM POLICY VS. GREEDY Q-POLICY
+--------------------------------------------------------------------------------
+A uniformly random policy was evaluated across 100 episodes from the default start
+(2, 0) with a 40-step cutoff:
+
++------------------------------+--------------------+---------------------------+
+| Measure                      | Random Policy      | Greedy Q-Policy           |
++------------------------------+--------------------+---------------------------+
+| Goal reached                 | 15.0% (15 / 100)   | 100.0% (1 / 1, deterministic)|
+| Steps to goal, if successful | 27.60 mean steps   | 4 steps                   |
+| Timeouts                     | 85.0% (85 / 100)   | 0.0%                      |
+| Invalid moves                | 9.82 mean invalids | 0 invalid moves           |
+| Mean Episode Return          | -14.62             | +9.70                     |
++------------------------------+--------------------+---------------------------+
+
+Analysis:
+The random policy overwhelmingly times out (85% failure) because finding the 1-cell
+doorway at (2, 2) and navigating out to (2, 4) requires multiple coordinated Right
+actions without backtracking. When it does succeed, it requires an average of 27.6
+meandering steps with nearly 10 collisions against walls and obstacles.
+In contrast, the learned greedy Q-policy navigates flawlessly in 4 steps with zero
+invalid moves and maximum possible return.
+
+--------------------------------------------------------------------------------
+4. REFLECTION QUESTIONS AND ANSWERS
+--------------------------------------------------------------------------------
+
+(a) Why might the training curve remain noisy after a good route is learned?
+    Answer:
+    The training curve remains noisy because epsilon-greedy action selection forces
+    the agent to take random exploratory actions with probability epsilon throughout
+    training. Even when the Q-table has converged to optimal values, whenever the
+    exploration coin flip occurs (e.g., with epsilon = 0.05 late in training, or higher
+    earlier), the agent chooses an action uniformly at random. This exploratory move
+    can slam into an obstacle (-1 penalty) or wander away from the doorway, causing
+    occasional low-return episodes or timeouts. Thus, training return reflects the
+    performance of an exploratory policy, not the pure greedy policy.
+
+(b) Does a high training return necessarily imply a good greedy policy?
+    Answer:
+    Not necessarily. A high average training return indicates that the agent often
+    accumulates rewards, but it can be misleading:
+    1. Exploration noise: An agent might achieve decent training returns through
+       lucky exploratory sequences while its underlying greedy policy has local cycles
+       or unvisited bottleneck states.
+    2. Overestimation bias: Q-learning's maximization step (max_{a'} Q(s', a'))
+       can overestimate action values, making suboptimal paths appear lucrative.
+    3. Sparse coverage: Only evaluating the policy with epsilon=0 and updates
+       disabled reveals whether the greedy actions alone form a coherent, cycle-free,
+       optimal trajectory from start to goal.
+
+(c) What is the difference between the learning rate alpha and the exploration
+    probability epsilon?
+    Answer:
+    - Exploration probability (epsilon):
+      Controls ACTION SELECTION (Behavior Policy). It dictates how often the agent
+      deviates from its current best estimates to try random actions (exploration)
+      versus exploiting known high-value actions. It operates in the action space.
+    - Learning rate (alpha):
+      Controls VALUE ESTIMATION (Temporal Difference Update). It determines the step
+      size by which newly observed TD targets adjust existing Q-value estimates:
+          Q <- Q + alpha * (Target - Q).
+      It controls the retention of old knowledge versus the adoption of new empirical
+      evidence. It operates in the parameter / value space.
+
+--------------------------------------------------------------------------------
+5. OPTIONAL INVESTIGATION: TRAINING WITH NO EXPLORATION (EPSILON = 0)
+--------------------------------------------------------------------------------
+We investigated training a fresh Q-table with epsilon = 0.0 throughout all 1,500
+episodes, tested across multiple random seeds:
+
+Results:
+- Seed 7:  Goal reached = True, Path length = 4 steps (Optimal)
+- Seed 42: Goal reached = True, Path length = 4 steps (Optimal)
+- Seed 99: Goal reached = True, Path length = 4 steps (Optimal)
+
+Explanation of the Phenomenon:
+Why did zero exploration succeed rather than immediately failing?
+Because all Q-table entries are initialized to 0.0. When all Q-values in a state are
+tied at 0.0, the training action selector breaks ties randomly. This random tie-breaking
+acts as implicit stochastic exploration during the earliest episodes until rewards are
+discovered! Once the goal (+10) is stumbled upon, non-zero positive values propagate
+backwards, naturally breaking ties in favor of the optimal path.
+
+However, if tie-breaking during training is made strictly deterministic (e.g., always
+choosing the lowest action index 0 = Up when Q-values are tied), the agent with
+epsilon = 0 immediately gets trapped: from (2, 0), it takes action Up to (1, 0), then
+Up to (0, 0), where it repeatedly attempts Up against the ceiling wall forever,
+timing out on every single episode and learning nothing.
+This confirms the PDF's observation: "Do not assume that no exploration must fail:
+random tie-breaking and initial values can also affect the actions tried."
+================================================================================

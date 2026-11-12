@@ -1,0 +1,123 @@
+================================================================================
+CS F407: REINFORCEMENT LEARNING AND DEEP RL LABORATORY
+TASK 6: ASK AN LLM TO IMPLEMENT AND VALIDATE DQN
+================================================================================
+
+1. ARCHITECTURAL TRANSITION: TABULAR Q-LEARNING VS. DEEP Q-NETWORKS
+--------------------------------------------------------------------------------
+Before modifying code, we explicitly delineated what remains identical and what
+changes between the tabular agent and the Deep Q-Network:
+
+What Remains the Same:
+- Underlying Environment: 5x5 grid, doorway at (2, 2), obstacles at {(0,2),(1,2),(3,2),(4,2)}.
+- Start and Goal States: Start at (2, 0), Goal at (2, 4).
+- Action Space: A = {Up (0), Down (1), Left (2), Right (3), Wait (4)}.
+- Reward Function: +10.0 for goal arrival, -1.0 for invalid moves, -0.1 for valid moves.
+- Discount Factor: gamma = 0.95.
+- Stopping Rules: True termination at goal; truncation after 40 steps.
+- TD Bootstrapping Principle: Suppress continuation value on goal termination; bootstrap
+  at truncation using next state reached before reset.
+
+What Changes:
++-----------------------+-----------------------------+-----------------------------+
+| Feature               | Tabular Q-Learning          | Deep Q-Network (DQN)        |
++-----------------------+-----------------------------+-----------------------------+
+| State Representation  | Scalar index s = 5*r + c    | Length-25 one-hot vector    |
+| Value Function        | 25x5 Lookup Table Q(s, a)   | PyTorch Neural Net Q_theta  |
+| Update Scope          | Single entry Q[s, a]        | Global network parameters   |
+| Correlation Handling  | Sequential online updates   | Replay Buffer (Capacity 20k)|
+| Target Stability      | Dynamic online lookup       | Separate Target Net Q_theta-|
+| Optimization          | Manual step alpha=0.2       | Adam Optimizer (lr=0.001)   |
+| Training Horizon      | 1,500 episodes              | 12,000 environment steps    |
++-----------------------+-----------------------------+-----------------------------+
+
+Neural Network Architecture:
+    Input: Length-25 one-hot vector
+    Layer 1: Linear(25, 64) -> ReLU
+    Layer 2: Linear(64, 64) -> ReLU
+    Output:  Linear(64, 5) -> Linear outputs (no softmax; Q-values are unbounded returns)
+
+--------------------------------------------------------------------------------
+2. SYNTHETIC BATCH LOSS VALIDATION TEST (PRE-TRAINING VERIFICATION)
+--------------------------------------------------------------------------------
+To prove mathematical correctness before training, a synthetic batch of 3 transitions
+was tested using mock networks where online network predicted Q(s, a) = 0.4 and target
+network predicted max_{a'} Q(s', a') = 2.0:
+
+Transition Batch Specification:
+- Item 0 (Non-terminal): r = 1.0, max Q' = 2.0, done = 0.0
+- Item 1 (Terminal):     r = 5.0, max Q' = 2.0, done = 1.0 (goal reached)
+- Item 2 (Truncated):    r = 1.0, max Q' = 2.0, done = 0.0 (bootstraps continuation)
+
+Analytical Hand Calculations:
+- Target 0: y_0 = 1.0 + 0.95 * 2.0 = 2.90
+- Target 1: y_1 = 5.00  (terminal suppresses next-state value)
+- Target 2: y_2 = 1.0 + 0.95 * 2.0 = 2.90  (truncation bootstraps next-state value)
+
+TD Errors:
+- e_0 = Q(s_0, a_0) - y_0 = 0.40 - 2.90 = -2.50  --> e_0^2 = 6.25
+- e_1 = Q(s_1, a_1) - y_1 = 0.40 - 5.00 = -4.60  --> e_1^2 = 21.16
+- e_2 = Q(s_2, a_2) - y_2 = 0.40 - 2.90 = -2.50  --> e_2^2 = 6.25
+- Expected Mean Squared Error (MSE):
+      L = (6.25 + 21.16 + 6.25) / 3 = 33.66 / 3 = 11.220000
+
+Programmatic Verification Results (from `test_dqn.py`):
+- Computed Targets: [2.90, 5.00, 2.90]  -->  EXACT MATCH
+- Selected Online Q: [0.40, 0.40, 0.40] -->  EXACT MATCH
+- Computed MSE Loss: 11.220000          -->  EXACT MATCH
+- Target Network Gradients: None (no gradients flowed into target network)
+- Online Network Gradients: Populated and valid
+- Status: ALL PASS
+
+Where the Recorded Action is Selected in Computing the Loss:
+In PyTorch, the network outputs Q-values for all 5 actions: `q_all` of shape (B, 5).
+The recorded action taken during the transition is an index vector `actions` of shape (B,).
+To select the specific Q-value corresponding to the taken action without losing the
+gradient computation graph, we execute:
+    q_selected = q_all.gather(1, actions.unsqueeze(1)).squeeze(1)
+This matches `q_selected[i] = q_all[i, actions[i]]`. The MSE loss is then computed
+strictly between `q_selected` and the detached `targets`.
+
+--------------------------------------------------------------------------------
+3. CONCEPT-TO-CODE MAPPING TABLE FOR DQN
+--------------------------------------------------------------------------------
++-----------------------------------+---------------------------------------------------+
+| Concept                           | Implementation Location in `dqn_single_robot.py`  |
++-----------------------------------+---------------------------------------------------+
+| Replay Buffer Storage             | `ReplayBuffer.push` (lines 48-50)                 |
++-----------------------------------+---------------------------------------------------+
+| Batch Sampling                    | `ReplayBuffer.sample` (lines 52-62)               |
++-----------------------------------+---------------------------------------------------+
+| TD Target Computation             | `DQNAgent.update_step` (lines 125-131)            |
++-----------------------------------+---------------------------------------------------+
+| Optimizer Gradient Step           | `DQNAgent.update_step` (lines 133-136)            |
++-----------------------------------+---------------------------------------------------+
+| Target-Network Synchronization    | `DQNAgent.update_step` (lines 139-142)            |
++-----------------------------------+---------------------------------------------------+
+
+--------------------------------------------------------------------------------
+4. TRAINING AND GREEDY EVALUATION RESULTS
+--------------------------------------------------------------------------------
+Training Parameters:
+- Total Environment Steps: 12,000 steps
+- Warmup Steps: 500 steps (random exploration before learning)
+- Update Interval: 1 optimizer step every 4 environment steps (total 2,875 updates)
+- Target Network Copy: Every 250 optimizer updates
+- Epsilon Decay: 1.0 -> 0.05 linearly over first 80% (9,600 steps)
+- Random Seed: 7
+- Output Plot: `dqn_training.png`
+
+Greedy Evaluation from S = (2, 0) with epsilon = 0.0:
+- Goal Reached: True (Success)
+- Total Steps: 4 steps
+- Total Return: +9.70
+- Invalid Moves: 0
+- Learned Trajectory: [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4)]
+- Action Sequence: ['Right', 'Right', 'Right', 'Right']
+
+Comparison with Tabular Q-learning:
+Both Tabular Q-learning and DQN successfully converged to the identical, theoretically
+optimal 4-step trajectory. While Tabular Q-learning requires updating discrete table cells,
+DQN generalized the state coordinates through its feedforward representations and
+achieved 100% greedy route fidelity.
+================================================================================

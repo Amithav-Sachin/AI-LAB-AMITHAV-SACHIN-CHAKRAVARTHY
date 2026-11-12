@@ -1,0 +1,43 @@
+================================================================================
+CS F407 ARTIFICIAL INTELLIGENCE: MASTER INDEX OF TASK OUTPUT FILES
+Reinforcement Learning and Deep RL: Using an LLM as an Engineering Assistant
+================================================================================
+
+Below is the complete directory mapping of individual task output files, source code,
+test harnesses, execution logs, and visual artifacts generated in the RL workspace:
+
+Deliverable File                         | Lab Section | Description
+-----------------------------------------+-------------+------------------------------------------------------------------------
+task_01_understand_the_mdp.txt           | Task 1      | Formal MDP (S, A, p, R, gamma), state sufficiency, determinism, route, RL vs search
+task_02_plan_the_learning_agent.txt      | Task 2      | Pre-prompt architectural plan: indexing, reset/step, epsilon schedule, logging
+task_03_prompt_tabular_q.txt             | Task 3      | Exact LLM prompt, implementation modularity, bug audit & guardrail analysis
+task_04_test_env_and_update.txt          | Task 4      | Transition testbench, synthetic TD updates (terminal vs truncation), code mapping
+task_05_train_evaluate_q_learning.txt    | Task 5      | 1500-ep training curves, optimal 4-step greedy path, 100-ep random baseline, ablation
+task_06_dqn_single_robot.txt             | Task 6      | DQN architecture, batch loss test, gradient isolation, code mapping, convergence
+task_07_two_robot_controller.txt         | Task 7      | Joint controller (50 in, 25 out), collision rules, 60k training, yielding analysis
+task_08_evaluation_and_reflection.txt    | Task 8      | Master comparison table, additional-start generalization (0,0) & ((0,0),(4,4)), Q1-Q6
+task_09_rlhf_connection.txt             | Sec 8.1     | RLHF framework: human feedback, Bradley-Terry reward model, policy tuning vs heuristics
+-----------------------------------------+-------------+------------------------------------------------------------------------
+
+CORE EXECUTABLE CODE & SCRIPTS:
+- warehouse_env.py          : SingleRobotWarehouseEnv & TwoRobotWarehouseEnv with full collision kinematics
+- tabular_q_learning.py     : Tabular Q-learning agent, training/evaluation loops, random policy benchmark
+- test_env.py               : Comprehensive unit testbench executing Task 4 and Task 7 isolated test cases
+- test_dqn.py               : Synthetic batch loss, target verification, and PyTorch gradient isolation tests
+- dqn_single_robot.py       : Deep Q-Network for single-robot navigation with replay buffer and target network
+- dqn_two_robots.py         : Centralized joint Deep Q-Network for two-robot collision avoidance and coordination
+- run_all_experiments.py    : Master orchestration pipeline executing all tests, training runs, and evaluations
+
+EXECUTION ARTIFACTS & LOGS:
+- test_results.txt          : Verbatim execution logs from test_env.py and test_dqn.py unit test suites
+- tabular_q_results.txt     : Verbatim training metrics, greedy trajectory, and random policy baseline results
+- dqn_results.txt           : Verbatim single-robot DQN training results and optimal greedy trajectory log
+- two_robot_results.txt     : Verbatim 60,000-step training log and step-by-step joint coordination table
+- generalization_results.txt: Complete empirical results from off-distribution starts without retraining
+- comparison_summary.txt    : Formatted master comparison table across all three learning systems
+- tabular_q_training.png    : High-resolution training curves for Tabular Q-learning (Return, Success, Epsilon)
+- dqn_training.png          : High-resolution training curves for Single-Robot DQN (Return, Success, TD Loss)
+- two_robot_training.png    : High-resolution training curves for Two-Robot DQN (Return, Success, Collisions)
+- two_robot_trajectory.png  : 2D spatial grid trajectory plot illustrating Robot A yielding for Robot B
+- LAB_REPORT.md             : Comprehensive academic laboratory report detailing theory, experiments, and analysis
+================================================================================

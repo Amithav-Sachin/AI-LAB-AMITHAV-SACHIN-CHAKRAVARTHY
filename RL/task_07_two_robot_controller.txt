@@ -1,0 +1,136 @@
+================================================================================
+CS F407: REINFORCEMENT LEARNING AND DEEP RL LABORATORY
+TASK 7: DESIGN AND TEST A TWO-ROBOT CONTROLLER
+================================================================================
+
+1. PRE-IMPLEMENTATION CONTROLLER DESIGN
+--------------------------------------------------------------------------------
+(a) Explain why observing only A's position is insufficient:
+    Answer:
+    If the controller observed only Robot A's position, the environment would become
+    partially observable (a POMDP). Robot B moves simultaneously, enters the narrow
+    corridor, and occupies cells. Without observing B's location, the state transition
+    p(s'_A | s_A, a_A) would be non-Markovian and unpredictable—moving Right into (2,2)
+    could result in a valid passage or a catastrophic collision depending entirely
+    on hidden information. A centralized joint state (p_A, p_B) restores full
+    observability and the Markov property.
+
+(b) Write down how you will represent both positions:
+    Answer:
+    Each robot's position is represented by a length-25 one-hot vector with a 1.0 at
+    index (5*r + c). The joint state is formed by concatenating the two vectors:
+        joint_input = [one_hot(p_A), one_hot(p_B)]  in R^50.
+
+(c) Calculate the number of joint actions:
+    Answer:
+    Each robot has 5 individual actions: {Up, Down, Left, Right, Wait}.
+    The joint action space is the Cartesian product:
+        |A_joint| = 5 x 5 = 25 joint actions.
+    Encoding: j = 5 * a_A + a_B, where j in {0, 1, ..., 24}.
+    Decoding: a_A, a_B = divmod(j, 5).
+
+(d) Draw one possible collision-free route for both robots:
+    Answer:
+    Because the doorway at (2, 2) is exactly 1 cell wide, both robots cannot pass
+    at the same time. One robot must yield by stepping into an open side cell.
+    A valid collision-free schedule:
+    - Step 0: A at (2,0), B at (2,4)
+    - Step 1: A moves Up to (1,0); B moves Left to (2,3)
+    - Step 2: A moves Wait at (1,0); B moves Left to (2,2) [Doorway]
+    - Step 3: A moves Wait at (1,0); B moves Left to (2,1)
+    - Step 4: A moves Down to (2,0); B moves Left to (2,0) [Wait: B can move to (2,0) while A steps aside to (1,1)]
+    Alternatively, A moves to (1,1) (sidestepping into the upper alcove) while B
+    passes straight through (2,2) -> (2,1) -> (2,0). Once B arrives, A drops back
+    to (2,1) and traverses (2,2) -> (2,3) -> (2,4).
+
+(e) Explain where one robot might need to wait or move aside:
+    Answer:
+    The narrow doorway at (2, 2) connects the left room (columns 0-1) and the right
+    room (columns 3-4). The obstacle wall spans columns c=2 at rows {0, 1, 3, 4}.
+    Because the passage has width 1, counter-directional robots will collide if both
+    enter column 2 simultaneously. Therefore, one robot must either wait in its room
+    or yield by stepping vertically (e.g., into row 1 or row 3) before entering the
+    doorway, allowing the other robot to clear the passage.
+
+--------------------------------------------------------------------------------
+2. COLLISION TESTBENCH VERIFICATION (PRE-TRAINING)
+--------------------------------------------------------------------------------
+The four canonical collision test scenarios from the PDF specification were verified:
+
++-------------------+----------+----------+--------------------------------------+--------+
+| Old A, B          | Action A | Action B | Actual Outcome & Reward              | Status |
++-------------------+----------+----------+--------------------------------------+--------+
+| (2, 1), (2, 3)    | Right    | Left     | SAME-CELL COLLISION at (2,2); r=-10.0| PASS   |
+| (2, 1), (2, 2)    | Right    | Left     | SWAP COLLISION; r=-10.0; term=True   | PASS   |
+| (2, 1), (2, 2)    | Right    | Right    | VALID FOLLOW MOVE: A->(2,2), B->(2,3)| PASS   |
+| (2, 1), (2, 2)    | Up       | Wait     | VALID SIDESTEP: A->(1,1), B->(2,2)   | PASS   |
++-------------------+----------+----------+--------------------------------------+--------+
+
+Robot at Goal Rule:
+- Verified that when Robot A is at goal (2, 4), it remains at (2, 4) regardless of
+  requested action, cannot collide with obstacles, and receives zero arrival rewards.
+
+--------------------------------------------------------------------------------
+3. TRAINING EXECUTION (60,000 ENVIRONMENT STEPS)
+--------------------------------------------------------------------------------
+Training Configuration:
+- Budget: 60,000 environment steps, seed 7
+- Network: Linear(50, 64) -> ReLU -> Linear(64, 64) -> ReLU -> Linear(64, 25)
+- Replay Buffer: 20,000 capacity, batch size 64
+- Warmup: 500 steps; Optimizer update every 4 steps (total 14,875 updates)
+- Target synchronization: Every 250 optimizer updates
+- Output Plots: `two_robot_training.png`, `two_robot_trajectory.png`
+
+Greedy Evaluation from Default Starts: A=(2, 0), B=(2, 4):
+- Outcome: Timeout (40 steps reached)
+- Collisions: 0 (Flawless collision avoidance throughout all 40 steps)
+- Invalid moves: 0
+- Robot B Arrived at Goal: Yes (arrived safely at (2,0) at Step 4)
+- Robot A Arrived at Goal: No (stalled waiting at (2,1) after yielding)
+- Both Arrived: False
+
+Step-by-Step Trajectory Log:
+Step  | Pos A    | Act A   | Pos B    | Act B   | Reward  | Event
+------+----------+---------+----------+---------+---------+------------------------------------
+1     | (2, 0)   | Right   | (2, 4)   | Left    |  -0.1   | Normal move: A->(2,1), B->(2,3)
+2     | (2, 1)   | Up      | (2, 3)   | Left    |  -0.1   | A yields! A steps UP to (1,1)
+3     | (1, 1)   | Wait    | (2, 2)   | Left    |  -0.1   | A waits; B enters doorway (2,2)
+4     | (1, 1)   | Up      | (2, 1)   | Left    |  +4.9   | B arrives at Goal (2,0)! [+5 bonus]
+5     | (0, 1)   | Down    | (2, 0)   | Down    |  -0.1   | A begins returning down
+6     | (1, 1)   | Down    | (2, 0)   | Up      |  -0.1   | A steps down to (2,1)
+7     | (2, 1)   | Wait    | (2, 0)   | Down    |  -0.1   | A holds at (2,1) to avoid doorway
+8..40 | (2, 1)   | Wait    | (2, 0)   | Down    |  -0.1   | A persists waiting until cutoff
+
+--------------------------------------------------------------------------------
+4. ANALYSIS OF THE EMERGENCE OF YIELDING & REFLECTION QUESTIONS
+--------------------------------------------------------------------------------
+
+(a) Which robot entered the passage first?
+    Answer:
+    Robot B entered the passage first. At Step 3, Robot B moved Left from (2, 3)
+    into the doorway cell (2, 2), while Robot A was holding at (1, 1).
+
+(b) Where did the other robot yield?
+    Answer:
+    Robot A yielded by moving out of the central corridor at Step 2, taking action
+    'Up' from (2, 1) into cell (1, 1) and subsequently (0, 1) in the upper room.
+    This cleared the line of sight and allowed Robot B unhindered passage.
+
+(c) Is avoiding collisions sufficient to count as success?
+    Answer:
+    NO. Avoiding collisions is a necessary condition for success, but not sufficient.
+    The primary objective is the delivery task—both robots must reach their respective
+    goals. A policy that chooses to wait indefinitely safely avoids all collisions
+    (receiving 0 collision penalties), but fails the warehouse delivery mandate and
+    times out. This illustrates the classic "freezing robot" dilemma in multi-agent RL.
+
+(d) How would the joint-action output size change for three robots?
+    Answer:
+    With centralized joint action selection, the output space grows exponentially
+    with the number of agents (curse of dimensionality):
+        |A_joint| = |A|^N = 5^N.
+    - For N = 1 robot:  5^1 = 5 actions.
+    - For N = 2 robots: 5^2 = 25 actions.
+    - For N = 3 robots: 5^3 = 125 linear outputs.
+    - For N = 4 robots: 5^4 = 625 linear outputs.
+================================================================================

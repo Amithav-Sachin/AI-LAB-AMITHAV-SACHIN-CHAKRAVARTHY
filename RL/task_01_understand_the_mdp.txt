@@ -1,0 +1,117 @@
+================================================================================
+CS F407: REINFORCEMENT LEARNING AND DEEP RL LABORATORY
+TASK 1: UNDERSTAND THE MDP
+================================================================================
+
+1. FORMULATION OF THE SINGLE-ROBOT NAVIGATION PROBLEM AS AN MDP
+--------------------------------------------------------------------------------
+An MDP is formally defined as the 5-tuple (S, A, p, R, gamma). For this warehouse
+navigation problem, the specification is:
+
++-------------------+-----------------------------------------------------------+
+| Component         | Your Specification                                        |
++-------------------+-----------------------------------------------------------+
+| State (S)         | Grid position coordinates s = (r, c) where r, c in {0..4}.|
+|                   | Total of 25 cells, of which 21 are traversable free cells |
+|                   | and 4 are fixed obstacles: {(0,2), (1,2), (3,2), (4,2)}.   |
+|                   | Cell (r, c) is mapped to linear index: idx = 5*r + c.     |
++-------------------+-----------------------------------------------------------+
+| Actions (A)       | Discrete action set of size 5:                           |
+|                   | A = {Up (0), Down (1), Left (2), Right (3), Wait (4)}     |
+|                   | Action coordinate deltas:                                 |
+|                   | - Up:    (-1,  0)                                         |
+|                   | - Down:  (+1,  0)                                         |
+|                   | - Left:  ( 0, -1)                                         |
+|                   | - Right: ( 0, +1)                                         |
+|                   | - Wait:  ( 0,  0)                                         |
++-------------------+-----------------------------------------------------------+
+| Transition Rule   | Fully deterministic: p(s' | s, a) in {0, 1}.              |
+| p(s' | s, a)      | Let (r', c') = (r + dr_a, c + dc_a).                      |
+|                   | - If (r', c') is out of grid bounds (r' < 0 or r' > 4     |
+|                   |   or c' < 0 or c' > 4) OR (r', c') in Obstacles:          |
+|                   |   The move is invalid; the robot remains in place: s' = s.|
+|                   | - Otherwise:                                              |
+|                   |   The move is valid; s' = (r', c').                       |
+|                   | Note: Action 'Wait' is always valid and leaves s' = s.    |
++-------------------+-----------------------------------------------------------+
+| Reward (R)        | Mutually exclusive reward function R(s, a, s'):           |
+|                   | 1. +10.0 : Robot reaches the goal G = (2, 4) (s' == G).   |
+|                   | 2.  -1.0 : Robot attempts an obstacle or boundary move    |
+|                   |            (invalid action, robot remains in place).      |
+|                   | 3.  -0.1 : Any other valid action, including 'Wait'.      |
++-------------------+-----------------------------------------------------------+
+| Initial State     | Fixed coordinate: S = (2, 0).                             |
++-------------------+-----------------------------------------------------------+
+| Terminal Outcome  | Reaching G = (2, 4) is the sole true task termination.    |
+|                   | Absorbing goal state terminates rollout immediately.      |
+|                   | Discount factor gamma = 0.95.                             |
+|                   | Cutoff: Unfinished rollouts truncated after 40 steps.     |
++-------------------+-----------------------------------------------------------+
+
+--------------------------------------------------------------------------------
+2. DETAILED QUESTIONS AND ANSWERS
+--------------------------------------------------------------------------------
+
+(a) What information is necessary to specify the state?
+    Answer:
+    The grid coordinates of the robot, written as the tuple (r, c) where r in {0..4}
+    and c in {0..4}. Because the world is static and deterministic, no velocity,
+    orientation, or sensor history is required.
+
+(b) Why is the current position sufficient when the map and goal are fixed?
+    Answer:
+    The environment satisfies the Markov property: the future state transition and
+    expected rewards depend strictly and solely on the current position s_t and
+    the chosen action a_t, completely independent of how the agent arrived at s_t:
+        P(S_{t+1} = s', R_{t+1} = r | S_t = s_t, A_t = a_t, S_{t-1}, A_{t-1}, ...)
+        = P(S_{t+1} = s', R_{t+1} = r | S_t = s_t, A_t = a_t).
+    Because the map layout, obstacles, doorway at (2,2), and goal at (2,4) never
+    change across time or episodes, all relevant physical information is captured
+    in the 2D coordinate (r, c). Additional state variables (such as step count or
+    prior trajectory history) are not part of the underlying task dynamics.
+
+(c) Is the transition rule deterministic?
+    Answer:
+    Yes, the transition dynamics are 100% deterministic. Executing action 'a' from
+    state 's' produces exactly one definitive next state s' with probability 1.0.
+    There is no stochastic slip, actuator noise, or external disturbance.
+
+(d) What is the shortest valid route from S to G?
+    Answer:
+    The shortest route goes directly through the single narrow doorway at (2, 2):
+        Step 0: S = (2, 0)
+        Step 1: Action Right -> (2, 1)  [Valid move, reward = -0.1]
+        Step 2: Action Right -> (2, 2)  [Pass doorway, reward = -0.1]
+        Step 3: Action Right -> (2, 3)  [Enter right room, reward = -0.1]
+        Step 4: Action Right -> (2, 4)  [Reach Goal G, reward = +10.0, Terminate]
+
+    Shortest route length: 4 steps (4 actions: Right, Right, Right, Right).
+    Theoretical cumulative undiscounted return: (-0.1) + (-0.1) + (-0.1) + 10.0 = +9.7.
+    Discounted return (gamma=0.95):
+        -0.1 + 0.95*(-0.1) + 0.95^2*(-0.1) + 0.95^3*(10.0)
+        = -0.1 - 0.095 - 0.09025 + 8.57375 = +8.2885.
+
+(e) Is finding that route by search the same process as learning action values
+    from experience?
+    Answer:
+    No, they represent fundamentally distinct paradigms in Artificial Intelligence:
+
+    1. Search (Planning / Model-Based Deliberation):
+       - A search algorithm (such as BFS or A*) is provided with complete prior
+         knowledge of the transition model T(s, a) and obstacle geometry.
+       - It performs systematic graph expansion in memory without ever taking a
+         physical action in the environment or incurring actual penalties.
+       - It directly computes an optimal sequence of states by forward deliberation.
+
+    2. Reinforcement Learning (Model-Free Experience Learning):
+       - The Q-learning agent begins tabula rasa (a table of zeros). It does NOT know
+         where the goal is, does NOT know where obstacles are, and does NOT know what
+         the actions do.
+       - The agent must explore by trial-and-error, physically executing actions,
+         colliding with walls (receiving -1 penalties), and wandering until it
+         stumbles upon the goal (+10 reward).
+       - It estimates the long-term expected cumulative reward Q(s, a) using temporal
+         difference (TD) errors backpropagated over thousands of transitions.
+       - RL learns a policy through empirical sample interaction rather than graph
+         search over an explicit model.
+================================================================================

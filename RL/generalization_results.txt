@@ -1,0 +1,16 @@
+================================================================================
+GENERALIZATION EVALUATION RESULTS (ALTERNATIVE STARTS WITHOUT RETRAINING)
+================================================================================
+
+SINGLE-ROBOT FROM START (0, 0):
+  Tabular Q: Goal Reached=True, Steps=6, Path=[(0, 0), (1, 0), (2, 0), (2, 1), (2, 2), (2, 3), (2, 4)]
+  DQN:       Goal Reached=True, Steps=6, Path=[(0, 0), (0, 1), (1, 1), (2, 1), (2, 2), (2, 3), (2, 4)]
+
+TWO-ROBOT FROM STARTS A:(0, 0) AND B:(4, 4):
+  Outcome: TIMEOUT
+  Steps: 40
+  Collision: False
+  Robot A Arrived: False
+  Robot B Arrived: False
+  Path A (first 8): [(0, 0), (1, 0), (1, 1), (1, 1), (0, 1), (1, 1), (0, 1), (1, 1)]
+  Path B (first 8): [(4, 4), (4, 4), (4, 4), (4, 3), (3, 3), (3, 3), (3, 3), (3, 3)]

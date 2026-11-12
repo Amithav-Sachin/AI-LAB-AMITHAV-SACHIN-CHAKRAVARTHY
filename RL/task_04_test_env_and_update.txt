@@ -1,0 +1,92 @@
+================================================================================
+CS F407: REINFORCEMENT LEARNING AND DEEP RL LABORATORY
+TASK 4: TEST THE ENVIRONMENT AND THE Q-LEARNING UPDATE
+================================================================================
+
+Testing the environment dynamics and the learning update separately guarantees
+that bugs in the transition model are not masked by learning anomalies, and vice versa.
+
+--------------------------------------------------------------------------------
+1. ENVIRONMENT TRANSITION TESTS (ISOLATED TESTBENCH)
+--------------------------------------------------------------------------------
+Initial positions were set explicitly via `env.set_state(pos)` without training:
+
++--------------+--------+---------------------------------+---------------------------------+--------+
+| Position     | Action | Expected Result                 | Actual Execution Output         | Status |
++--------------+--------+---------------------------------+---------------------------------+--------+
+| (0, 0)       | Up     | Stay at (0, 0); r = -1.0; no term | Next=(0,0), r=-1.0, term=False  | PASS   |
+| (1, 1)       | Right  | Stay at (1, 1); r = -1.0; no term | Next=(1,1), r=-1.0, term=False  | PASS   |
+| (2, 1)       | Right  | Move to (2, 2); r = -0.1        | Next=(2,2), r=-0.1, term=False  | PASS   |
+| (2, 1)       | Wait   | Stay at (2, 1); r = -0.1        | Next=(2,1), r=-0.1, term=False  | PASS   |
+| (2, 3)       | Right  | Reach (2, 4); r = +10.0; term   | Next=(2,4), r=+10.0, term=True  | PASS   |
++--------------+--------+---------------------------------+---------------------------------+--------+
+
+40-Step Rollout Truncation Verification:
+- An agent started at (2, 0) executed 'Wait' (action 4) continuously.
+- Step counter incremented to exactly 40.
+- Output: `terminated = False`, `truncated = True`.
+- Episode stopped immediately upon reaching step 40.
+- Status: PASS.
+
+--------------------------------------------------------------------------------
+2. SYNTHETIC Q-LEARNING UPDATE TESTS
+--------------------------------------------------------------------------------
+Hand calculations vs. programmatic updates using prescribed baseline values:
+    Q(s, a) = 0.4,   alpha = 0.2,   gamma = 0.95
+
+Test Case 1: Non-terminal Transition (r = 1.0, max_{a'} Q(s', a') = 2.0)
+- Target:
+      y = r + gamma * max_{a'} Q(s', a') = 1.0 + 0.95 * 2.0 = 2.9000
+- Updated Q(s, a):
+      Q_new = Q + alpha * (y - Q) = 0.4 + 0.2 * (2.9000 - 0.4) = 0.4 + 0.5000 = 0.9000
+- Programmatic output: y = 2.9000, Q_new = 0.9000  -->  MATCH (PASS)
+
+Test Case 2: Truly Terminal Transition (r = 5.0, goal reached)
+- Target:
+      y = r = 5.0000  (continuation value max_{a'} Q(s', a') is suppressed)
+- Updated Q(s, a):
+      Q_new = Q + alpha * (y - Q) = 0.4 + 0.2 * (5.0000 - 0.4) = 0.4 + 0.9200 = 1.3200
+- Programmatic output: y = 5.0000, Q_new = 1.3200  -->  MATCH (PASS)
+
+Test Case 3: Truncation Flag Set (r = 1.0, max_{a'} Q(s', a') = 2.0, truncated = True)
+- Target:
+      y = r + gamma * max_{a'} Q(s', a') = 1.0 + 0.95 * 2.0 = 2.9000
+      (Bootstrapping is maintained because 40-step cutoff is an empirical horizon,
+       not an intrinsic task termination)
+- Updated Q(s, a):
+      Q_new = 0.4 + 0.2 * (2.9000 - 0.4) = 0.9000
+- Programmatic output: y = 2.9000, Q_new = 0.9000  -->  MATCH (PASS)
+
+Question: Which case should ignore the next-state value?
+Answer:
+The TRULY TERMINAL case (Test Case 2) must ignore the next-state value.
+In a truly terminal state, the episode has terminated within the MDP; there are no
+subsequent actions, transitions, or future rewards to collect, so the discounted
+continuation return is identically zero.
+In contrast, truncation (Test Case 3) is an artificial timeout imposed by the
+experimenter. The environment would continue indefinitely if not stopped, so the
+agent must bootstrap from the estimated value of the next state to avoid underestimating
+the value of states visited near the horizon.
+
+--------------------------------------------------------------------------------
+3. CONCEPT-TO-CODE MAPPING TABLE
+--------------------------------------------------------------------------------
++-----------------------------------+---------------------------------------------------+
+| Concept                           | Function or Line in Generated Program             |
++-----------------------------------+---------------------------------------------------+
+| State and action representation   | `pos_to_index`, `ACTION_DELTAS` in                |
+|                                   | `warehouse_env.py` (lines 20-35)                  |
++-----------------------------------+---------------------------------------------------+
+| Reward and termination            | `SingleRobotWarehouseEnv.step` in                 |
+|                                   | `warehouse_env.py` (lines 75-105)                 |
++-----------------------------------+---------------------------------------------------+
+| Epsilon-greedy action choice      | `TabularQLearningAgent.select_action` in          |
+|                                   | `tabular_q_learning.py` (lines 35-52)             |
++-----------------------------------+---------------------------------------------------+
+| TD target and Q-table update      | `TabularQLearningAgent.update` in                 |
+|                                   | `tabular_q_learning.py` (lines 54-72)             |
++-----------------------------------+---------------------------------------------------+
+| Training and greedy evaluation    | `train_tabular_q` & `evaluate_greedy` in          |
+|                                   | `tabular_q_learning.py` (lines 80-165)            |
++-----------------------------------+---------------------------------------------------+
+================================================================================

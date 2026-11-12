@@ -1,0 +1,87 @@
+================================================================================
+CS F407: REINFORCEMENT LEARNING AND DEEP RL LABORATORY
+TASK 3: ASK AN LLM TO IMPLEMENT TABULAR Q-LEARNING
+================================================================================
+
+1. EXACT PROMPT SUBMITTED TO THE LLM
+--------------------------------------------------------------------------------
+"Implement tabular Q-learning in Python using NumPy for the warehouse environment
+specified in this laboratory.
+
+Use a 5 x 5 grid, the obstacle set {(0, 2), (1, 2), (3, 2), (4, 2)}, start (2, 0),
+and goal (2, 4). Actions are up (0), down (1), left (2), right (3), and wait (4).
+An obstacle or boundary move stays in place. Use mutually exclusive rewards:
++10 on reaching the goal, -1 for an invalid move, and -0.1 for another valid action.
+
+Provide separate functions for:
+1. The environment (SingleRobotWarehouseEnv with reset, step, and set_state methods);
+2. Epsilon-greedy action selection (with random tie-breaking during training and
+   deterministic first-index tie-breaking during evaluation);
+3. One Q-learning update step (Q(s, a) <- Q(s, a) + alpha * (y - Q(s, a)));
+4. Training loop (1,500 episodes, seed 7, alpha=0.2, gamma=0.95, initial Q-table zeros,
+   linear epsilon decay from 1.0 to 0.05 over first 1,200 episodes);
+5. Deterministic greedy evaluation (epsilon=0, learning updates disabled).
+
+Cut off unfinished episodes after 40 steps. Return separate termination and truncation
+flags. Bootstrap at truncation, but not at goal termination. Use the next state from
+before reset in every update.
+
+Do not use path search or a ready-made RL library. Include a separate test mode in which
+I can set the robot's position, choose one action, and inspect the outcome without training.
+Report training curves (50-episode moving averages of return and success rate) and the
+learned greedy trajectory with coordinates and action names. Keep the implementation
+simple and modular, and explain its main functions."
+
+--------------------------------------------------------------------------------
+2. ANALYSIS OF GENERATED IMPLEMENTATION & CODE STRUCTURE
+--------------------------------------------------------------------------------
+The resulting implementation (in `tabular_q_learning.py` and `warehouse_env.py`)
+faithfully adhered to the specification:
+
+1. Environment Class (`SingleRobotWarehouseEnv`):
+   - Encapsulates grid boundaries, obstacle set, start, goal, and step counter.
+   - `step(action)` evaluates coordinate validity, calculates mutually exclusive
+     rewards (+10, -1, -0.1), and explicitly separates `terminated` (true goal arrival)
+     from `truncated` (step_count >= 40).
+   - Provides `set_state(pos)` allowing synthetic unit testing of arbitrary grid cells.
+
+2. Agent Class (`TabularQLearningAgent`):
+   - Stores `q_table` of shape (25, 5).
+   - `select_action(s, epsilon, training)` implements unbiased epsilon-greedy
+     exploration with random choice among multiple maximal Q-values during training,
+     and fixed `np.argmax` tie-breaking during evaluation.
+   - `update(s, a, r, next_s, terminated)` calculates the TD target y:
+         target = r if terminated else (r + gamma * max(Q[next_s]))
+     and performs the synchronous tabular update.
+
+3. Training & Evaluation Orchestrators:
+   - `train_tabular_q(...)`: Orchestrates the 1,500 episode loop, logs per-episode
+     return, success, invalid moves, timeouts, and epsilon decay.
+   - `evaluate_greedy(...)`: Executes a clean zero-exploration evaluation trajectory
+     starting at (2, 0).
+   - `evaluate_random_policy(...)`: Benchmarks an untrained agent over 100 trials.
+
+--------------------------------------------------------------------------------
+3. CRITICAL AUDIT, PROMPT ADJUSTMENTS & PREVENTED BUGS
+--------------------------------------------------------------------------------
+During code inspection before execution, three potential pitfalls were checked
+and guarded against:
+
+1. Truncation vs. Termination Bootstrapping:
+   - Danger: Naive LLM implementations often pass `done = terminated or truncated`
+     into the update function, inadvertently setting target = r on step 40.
+   - Guardrail: We verified that `target = r` is ONLY guarded by `terminated`. On step 40,
+     the agent correctly bootstraps from `max Q(next_s, :)` using the pre-reset state.
+
+2. Pre-Reset Next State Integrity:
+   - Danger: If `env.reset()` is invoked upon truncation before the TD update runs,
+     the update would erroneously bootstrap from the start state (2, 0) instead of
+     the final state reached on step 40.
+   - Guardrail: The update is executed immediately after `env.step()`, guaranteeing
+     that `next_s` corresponds to the actual transition outcome before reset.
+
+3. Action Space and Delta Mapping:
+   - Danger: Mixing up row/column index deltas (e.g., (+1, 0) for Up instead of Down).
+   - Guardrail: Verified that Up=(-1, 0), Down=(+1, 0), Left=(0, -1), Right=(0, +1),
+     Wait=(0, 0), matching standard matrix indexing where rows increase downwards.
+================================================================================

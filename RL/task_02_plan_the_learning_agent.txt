@@ -1,0 +1,111 @@
+================================================================================
+CS F407: REINFORCEMENT LEARNING AND DEEP RL LABORATORY
+TASK 2: PLAN THE LEARNING AGENT (ARCHITECTURAL SPECIFICATION)
+================================================================================
+
+Before prompting an LLM or implementing code, this architectural design
+specifies the state representation, dynamics, Q-table geometry, exploration,
+bootstrapping semantics, and evaluation protocols for the warehouse agent.
+
+--------------------------------------------------------------------------------
+1. SPECIFICATION COMPONENTS
+--------------------------------------------------------------------------------
+
+1. Grid and Robot Position Representation:
+   - The warehouse is a 5x5 coordinate grid where rows (r) and columns (c) range
+     from 0 to 4. Rows increase downwards; columns increase rightwards.
+   - Obstacles are located at {(0, 2), (1, 2), (3, 2), (4, 2)}.
+   - A single robot position is represented as an integer tuple (r, c).
+   - For tabular indexing, the 2D coordinate is mapped to a unique 1D state index:
+         state_index = 5 * r + c  in  {0, 1, ..., 24}.
+   - For neural network inputs (DQN), the state is mapped to a length-25 one-hot
+     binary vector with a 1.0 at index (5*r + c) and 0.0 elsewhere.
+
+2. How 'reset' and 'step' Will Work:
+   - reset(start_pos=(2, 0)):
+     Initializes the robot coordinate to (2, 0), sets the step counter to 0,
+     and returns the initial state tuple (2, 0). Supports an optional start_pos
+     argument for evaluating off-distribution starting locations.
+   - step(action):
+     Receives action in {0: Up, 1: Down, 2: Left, 3: Right, 4: Wait}.
+     Increments internal step_count by 1.
+     Computes tentative coordinates (nr, nc) = (r + dr[action], c + dc[action]).
+     Evaluates legality:
+     * If nr < 0 or nr >= 5 or nc < 0 or nc >= 5 or (nr, nc) in Obstacles:
+       Move is invalid. Robot remains at (r, c). Reward = -1.0, Terminated = False.
+     * Else (valid move):
+       Robot moves to (nr, nc).
+       If (nr, nc) == (2, 4) [Goal]:
+           Reward = +10.0, Terminated = True.
+       Else:
+           Reward = -0.1, Terminated = False.
+     Checks truncation: truncated = (not terminated) and (step_count >= 40).
+     Returns (next_state, reward, terminated, truncated, info_dict).
+
+3. How the Q-table Will Be Indexed:
+   - The Q-table is a 2D NumPy array of shape (25, 5), dtype=np.float64,
+     initialized completely to zeros.
+   - Row index corresponds to state index (5*r + c).
+   - Column index corresponds to action code:
+     0: Up, 1: Down, 2: Left, 3: Right, 4: Wait.
+   - The 4 rows corresponding to obstacle coordinates (indices 2, 7, 17, 22)
+     remain permanently unused because the robot can never legally enter them.
+
+4. How Epsilon-Greedy Action Selection Will Be Implemented:
+   - During training, for a given state index s and exploration rate epsilon:
+     Draw random float p ~ Uniform(0, 1).
+     * If p < epsilon:
+       Sample uniformly at random from {0, 1, 2, 3, 4}.
+     * Else:
+       Extract Q(s, :) from Q-table. Find maximum value max_q = max(Q(s, :)).
+       Identify all action indices achieving max_q:
+           best_actions = {a | Q(s, a) == max_q}.
+       Break ties uniformly at random among best_actions to maintain unbiased
+       stochastic exploration early in training.
+   - During evaluation:
+     Set epsilon = 0.0. Break ties deterministically using a fixed rule (e.g.,
+     lowest action index via np.argmax(Q(s, :))) with zero learning updates.
+
+5. How the Terminal Flag Will Enter the Q-learning Target:
+   - The Temporal Difference (TD) target is:
+         y = r + gamma * (1 - terminated) * max_{a'} Q(s', a')
+   - Crucial Distinction Between Termination and Truncation:
+     * True Termination (Goal Reached): The task has truly ended. Future returns
+       are zero by definition. The continuation term is suppressed:
+           y = r = +10.0.
+     * Truncation (40-Step Cutoff): The cutoff is merely an empirical collection
+       horizon, NOT a deadline in the underlying MDP. The agent must bootstrap
+       its expected future return from the final state s' reached on step 40:
+           y = r + gamma * max_{a'} Q(s', a').
+       Here, s' is the state from BEFORE the environment is reset!
+   - Q-value Update Rule:
+         Q(s, a) <- Q(s, a) + alpha * (y - Q(s, a)).
+
+6. When an Episode Will Stop:
+   - An episode immediately stops if either condition is met:
+     a) terminated == True (Robot reached Goal at (2, 4));
+     b) truncated == True (Step count reaches 40 steps).
+
+7. How Training and Evaluation Will Differ:
+   +-----------------------+-----------------------------+-----------------------------+
+   | Dimension             | Training Mode               | Evaluation Mode             |
+   +-----------------------+-----------------------------+-----------------------------+
+   | Exploration (epsilon) | Linear decay 1.0 -> 0.05    | Strictly 0.0 (Greedy)       |
+   | Action Tie-Breaking   | Uniform random among max Q  | Deterministic (first index) |
+   | Parameter Updates     | Active (alpha = 0.2)        | Completely Disabled         |
+   | Replay / Memory       | Actively updated            | Read-only / Inactive        |
+   | Purpose               | Discover optimal values     | Inspect learned policy      |
+   +-----------------------+-----------------------------+-----------------------------+
+
+--------------------------------------------------------------------------------
+2. RECORDING METRICS (DATA LOGGING SPECIFICATION)
+--------------------------------------------------------------------------------
+The program records the following metrics across all training episodes:
+1. Training episode cumulative return: sum_{t} r_t.
+2. Goal success indicator: binary (1 if terminated, 0 if truncated/timed out).
+3. Epsilon value at the start of each episode.
+4. Final greedy trajectory: ordered list of coordinates [(r_0, c_0), ..., (r_k, c_k)].
+5. Final greedy path length (number of transitions).
+6. Total invalid moves per episode (attempts into walls/boundaries).
+7. Total episode timeouts (episodes reaching 40 steps without reaching goal).
+================================================================================
