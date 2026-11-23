@@ -1,0 +1,100 @@
+================================================================================
+LABORATORY TEST RESULTS & CONSOLE LOGS
+Laboratory - Neural Models: Learning, Depth, Activations, and Output Layers
+================================================================================
+
+1. BASELINE 2-2-1 XOR MODEL CONVERGENCE (Task 4 Part A & B)
+--------------------------------------------------------------------------------
+Initial BCE Loss: 0.748230
+Initial Gradient dL/dW^(1):
+  [[-0.00399953, -0.00442072],
+   [ 0.00639591,  0.00806316]]
+Initial Frobenius Norm ||dL/dW^(1)||_2: 0.011894
+
+Epoch   500/3000 | Loss: 0.008669 | Correct: 4/4 | Grad Norm W1: 0.000357
+Epoch  1000/3000 | Loss: 0.002665 | Correct: 4/4 | Grad Norm W1: 0.000092
+Epoch  1500/3000 | Loss: 0.001313 | Correct: 4/4 | Grad Norm W1: 0.000041
+Epoch  2000/3000 | Loss: 0.000772 | Correct: 4/4 | Grad Norm W1: 0.000023
+Epoch  2500/3000 | Loss: 0.000499 | Correct: 4/4 | Grad Norm W1: 0.000014
+Epoch  3000/3000 | Loss: 0.000340 | Correct: 4/4 | Grad Norm W1: 0.000009
+
+Final Prediction Results:
+  Input (0, 0): True y = 0 | Pred Prob = 0.000308 | Thresholded = 0 | [PASS]
+  Input (0, 1): True y = 1 | Pred Prob = 0.999694 | Thresholded = 1 | [PASS]
+  Input (1, 0): True y = 1 | Pred Prob = 0.999554 | Thresholded = 1 | [PASS]
+  Input (1, 1): True y = 0 | Pred Prob = 0.000299 | Thresholded = 0 | [PASS]
+All 4/4 XOR Patterns Classified Correctly: TRUE (100.0%)
+
+Learned Model Parameters:
+Final W^(1):
+  [[-10.374472,  10.421232],
+   [-11.321673,  10.803159]]
+Final b^(1):
+  [ 5.2844534, -5.579877 ]
+Final W^(2):
+  [[-16.039394,  16.408545]]
+Final b^(2):
+  [ 7.8119135 ]
+Final Gradient dL/dW^(1):
+  [[ 5.1380557e-06, -5.7523216e-06],
+   [ 2.7465214e-06, -3.9361094e-06]]
+
+
+2. ZERO INITIALIZATION SYMMETRY TEST (Task 4 Part C)
+--------------------------------------------------------------------------------
+Initial Condition: W^(1) = 0, b^(1) = 0, W^(2) = 0, b^(2) = 0
+Step   | W^(1) Row 1            | W^(1) Row 2            | Identical? | BCE Loss
+--------------------------------------------------------------------------------
+0      | [0.000000, 0.000000]   | [0.000000, 0.000000]   | True       | 0.693147
+1      | [0.000000, 0.000000]   | [0.000000, 0.000000]   | True       | 0.693147
+2      | [0.000000, 0.000000]   | [0.000000, 0.000000]   | True       | 0.693147
+5      | [0.000000, 0.000000]   | [0.000000, 0.000000]   | True       | 0.693147
+10     | [0.000000, 0.000000]   | [0.000000, 0.000000]   | True       | 0.693147
+50     | [0.000000, 0.000000]   | [0.000000, 0.000000]   | True       | 0.693147
+100    | [0.000000, 0.000000]   | [0.000000, 0.000000]   | True       | 0.693147
+Status: Symmetrical Failure Confirmed (Loss stuck at ln(2) = 0.693147)
+
+
+3. ACTIVATION BENCHMARK RESULTS (Task 4 Part D)
+--------------------------------------------------------------------------------
+Hyperparameters: lr = 0.05, epochs = 2500, early_step = 10, seed = 2
+Activation | Final Loss | 4/4 Correct? | Early ||dL/dW^(1)||_2 (Step 10)
+------------------------------------------------------------------------
+Sigmoid    | 0.000380   | Yes (4/4)    | 0.008495
+Tanh       | 0.000132   | Yes (4/4)    | 0.046584
+ReLU       | 0.000049   | Yes (4/4)    | 0.024614
+------------------------------------------------------------------------
+
+
+4. THREE-CLASS SENSOR CLASSIFIER RESULTS (Task 5)
+--------------------------------------------------------------------------------
+Initial Condition: 2 inputs -> 4 hidden units (ReLU) -> 3 output logits
+Epoch   500/2500 | Loss: 0.000209 | Accuracy: 100.0%
+Epoch  1000/2500 | Loss: 0.000055 | Accuracy: 100.0%
+Epoch  2500/2500 | Loss: 0.000008 | Accuracy: 100.0%
+
+Detailed Probability Distributions:
+  Input (0, 0) -> Class 0 (Both Inactive):  P=[0.999991, 0.000009, 0.000000] | Pred=0 [PASS]
+  Input (0, 1) -> Class 1 (Disagree):       P=[0.000001, 0.999995, 0.000004] | Pred=1 [PASS]
+  Input (1, 0) -> Class 1 (Disagree):       P=[0.000004, 0.999989, 0.000007] | Pred=1 [PASS]
+  Input (1, 1) -> Class 2 (Both Active):    P=[0.000000, 0.000007, 0.999993] | Pred=2 [PASS]
+
+Probability Sum Test (Input (0, 0)):
+  P0 + P1 + P2 = 0.99999142 + 0.00000854 + 0.00000000 = 0.9999999404 [PASS]
+
+Shift Invariance Test (Logits + 100):
+  Max absolute difference in Softmax vector: 4.09e-11 [PASS]
+
+Logit Gradient Verification (Analytical (p - y)/N vs. Autograd):
+  Analytical (p - y)/N:
+    [[-2.1457672e-06,  2.1345925e-06,  1.0196261e-11],
+     [ 2.4724289e-07, -1.2218952e-06,  9.8415171e-07],
+     [ 1.1141292e-06, -2.8610229e-06,  1.7567825e-06],
+     [ 1.1311164e-14,  1.8157865e-06, -1.8179417e-06]]
+  PyTorch Autograd:
+    [[-2.1457672e-06,  2.1345925e-06,  1.0196271e-11],
+     [ 2.4724292e-07, -1.2218952e-06,  9.8415171e-07],
+     [ 1.1141292e-06, -2.8610229e-06,  1.7567825e-06],
+     [ 1.1311159e-14,  1.8157858e-06, -1.8179417e-06]]
+  Max Absolute Difference: 6.82e-13 [PASS]
+================================================================================

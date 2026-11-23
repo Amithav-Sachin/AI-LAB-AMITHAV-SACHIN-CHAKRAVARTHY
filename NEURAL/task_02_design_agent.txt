@@ -1,0 +1,115 @@
+================================================================================
+TASK 2: DESIGN THE INTELLIGENT AGENT
+Laboratory - Neural Models: Learning, Depth, Activations, and Output Layers
+================================================================================
+
+1. MODEL SPECIFICATION ON PAPER
+--------------------------------------------------------------------------------
+Architecture:
+  2 inputs -> 2 hidden units -> 1 output logit (2-2-1 network)
+
+Mathematical Definition:
+  Input Vector:
+    x = [x1, x2]^T in R^2
+
+  Hidden Layer:
+    Pre-activation:   a^(1) = W^(1)*x + b^(1)
+    Activation:       h^(1) = f(a^(1))
+    Shapes:           W^(1) in R^(2x2), b^(1) in R^2, h^(1) in R^2
+    Activation f:     Nonlinear function (Sigmoid / Tanh / ReLU)
+
+  Output Layer:
+    Pre-activation (logit): z = W^(2)*h^(1) + b^(2)
+    Shapes:                 W^(2) in R^(1x2), b^(2) in R (scalar)
+    Output Probability:     p_hat = sigma(z) = 1 / (1 + exp(-z)) in (0, 1)
+
+  Loss Function:
+    Binary Cross-Entropy (BCE):
+      L(y, p_hat) = - [ y * ln(p_hat) + (1 - y) * ln(1 - p_hat) ]
+    Expressed directly in logits:
+      L(y, z) = max(z, 0) - z*y + ln(1 + exp(-|z|))  [BCEWithLogitsLoss]
+
+  Optimization:
+    First-order gradient-based optimization (Adam / SGD)
+
+
+2. SCIENTIFIC & ENGINEERING JUSTIFICATIONS
+--------------------------------------------------------------------------------
+Question 1: Why is the hidden nonlinearity scientifically necessary here?
+Answer:
+Without the nonlinear activation function f, the composition of the two affine
+layers collapses mathematically:
+    z = W^(2) * (W^(1)*x + b^(1)) + b^(2)
+      = (W^(2) * W^(1)) * x + (W^(2)*b^(1) + b^(2))
+      = W_eff * x + b_eff
+Because W_eff in R^(1x2) and b_eff in R define an affine hyperplane, the model
+remains strictly linear. By Task 1, no linear hyperplane can classify XOR.
+The nonlinear activation function f introduces curvature that bends the input
+space, mapping the four collinear/intersecting points into a 2D hidden space
+h^(1) = [h1, h2] where the convex hulls of Class 0 and Class 1 no longer
+intersect, enabling a linear output boundary to separate them cleanly.
+
+Question 2: Why is sigmoid plus binary cross-entropy a sensible engineering
+pairing for the output?
+Answer:
+1. Probabilistic Consistency: The binary target y in {0, 1} represents a Bernoulli
+   random variable. The sigmoid function maps arbitrary real-valued logits z in R
+   to valid probabilities p_hat in (0, 1). The BCE loss is the exact negative
+   log-likelihood of the Bernoulli distribution.
+2. Well-Behaved Gradient Dynamics (Canonical Link Cancellation):
+   When Sigmoid is paired with BCE, the derivative with respect to the logit is:
+       dL/dz = (dL/dp_hat) * (dp_hat/dz)
+             = [ -y/p_hat + (1-y)/(1-p_hat) ] * [ p_hat * (1 - p_hat) ]
+             = p_hat - y
+   The derivative simplifies into the linear difference between the predicted
+   probability and the ground-truth target.
+3. Contrast with Mean Squared Error (MSE):
+   Pairing Sigmoid with MSE yields:
+       dL_MSE/dz = (p_hat - y) * p_hat * (1 - p_hat)
+   If the network is confidently wrong (e.g., z >> 0 so p_hat ~= 1 when y = 0),
+   the factor p_hat * (1 - p_hat) ~= 0, causing the gradient to vanish and
+   permanently stalling learning. Sigmoid + BCE completely prevents this failure.
+
+Question 3: What evidence will count as successful learning?
+Answer:
+We establish four rigorous validation criteria:
+1. Loss Convergence: Final BCE loss drops from initial ~0.7 to near zero (< 0.01).
+2. 100% Classification Accuracy: Thresholded predictions I(p_hat >= 0.5) match
+   the true labels y for all four inputs: (0,0)->0, (0,1)->1, (1,0)->1, (1,1)->0.
+3. Gradient Vanishing to Stationary Point: The gradient norm ||grad_W L||_2
+   diminishes smoothly from an active early magnitude to near zero as the model
+   approaches the minimum, confirming numerical convergence.
+4. Latent Rank Non-Degeneracy: The two hidden units compute linearly independent
+   activation vectors across the four examples (breaking symmetry).
+
+
+3. THINK ABOUT IT: CREDIT ASSIGNMENT WITHOUT HIDDEN LABELS
+--------------------------------------------------------------------------------
+Question:
+"The hidden units are not given target values. If the network learns XOR, what
+has determined what each hidden unit should compute? Relate your answer to the
+role of backpropagation."
+
+Answer:
+The behavior of the hidden units is determined entirely by backpropagated credit
+assignment via the multivariate chain rule.
+The supervisor only specifies loss L at the final scalar output. Backpropagation
+projects this scalar error backwards through the output weights:
+    delta_j^(1) = dL / da_j^(1) = (dL/dz) * W_j^(2) * f'(a_j^(1))
+This gradient signal delta_j^(1) informs hidden unit j how much and in what
+direction its pre-activation must adjust to reduce overall network loss.
+Combined with random initial weight asymmetries:
+- One hidden unit typically specializes into detecting an "OR" condition
+  (active if x1 or x2 is 1);
+- The second hidden unit specializes into detecting an "AND" condition
+  (active only if both x1 and x2 are 1);
+- The output layer then subtracts the second feature from the first:
+      XOR(x1, x2) = OR(x1, x2) - AND(x1, x2).
+Thus, backpropagation discovers internal features without any direct supervision.
+
+
+CHECKPOINT RECORD:
+- 2-2-1 model specification formalized.
+- Hidden nonlinearity and Sigmoid+BCE pairing mathematically justified.
+- Four explicit validation criteria established.
+================================================================================

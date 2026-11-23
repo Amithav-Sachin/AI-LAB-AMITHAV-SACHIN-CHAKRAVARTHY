@@ -1,0 +1,87 @@
+================================================================================
+TASK 3: USE AN LLM TO GENERATE A FIRST IMPLEMENTATION
+Laboratory - Neural Models: Learning, Depth, Activations, and Output Layers
+================================================================================
+
+1. EXACT PROMPT PROVIDED TO THE LLM ASSISTANT
+--------------------------------------------------------------------------------
+"Generate minimal PyTorch code for the following model and dataset. Do not change
+the architecture or task. Implement a 2-2-1 network for XOR with explicit inputs
+[[0,0],[0,1],[1,0],[1,1]] and labels [[0],[1],[1],[0]]. Use a nonlinear hidden
+activation (sigmoid/tanh), logits with BCEWithLogitsLoss, random weight
+initialization, and full-batch training for a few thousand lightweight CPU steps.
+After training, report the initial and final loss, all four probabilities,
+thresholded labels, and one parameter-gradient tensor. Set a random seed for
+reproducibility and explain each test in one sentence."
+
+
+2. CODE INSPECTION BEFORE EXECUTION
+--------------------------------------------------------------------------------
+Before executing the code, we systematically inspect its computational graph:
+1. Where the Forward Pass Occurs:
+   Inside the `forward(self, x)` method:
+       h = self.act(self.fc1(x))
+       logit = self.fc2(h)
+   The input tensor X passes sequentially through affine map fc1, activation act,
+   and output affine map fc2.
+2. Where the Scalar Loss is Formed:
+   In the training loop:
+       loss = criterion(logits, y)
+   where criterion is `nn.BCEWithLogitsLoss()`. It computes the element-wise
+   logistic loss for each of the 4 examples and reduces them by arithmetic mean.
+3. Where Reverse-Mode AD is Invoked:
+   At `loss.backward()`. PyTorch executes backpropagation through the reverse
+   dynamic computational graph, computing vector-Jacobian products from the
+   scalar loss back to each parameter and populating `param.grad`.
+4. Where the Optimizer Changes Parameters:
+   At `optimizer.step()`. The optimizer updates each parameter tensor along its
+   negative gradient direction using the Adam / SGD update rule.
+
+
+3. TWO ENGINEERING CHANGES MADE BEFORE EXECUTION
+--------------------------------------------------------------------------------
+Change 1: Replaced `nn.Sigmoid()` + `nn.BCELoss()` with `nn.BCEWithLogitsLoss()`.
+  Rationale: The raw LLM boilerplate occasionally outputs `probs = torch.sigmoid(logits)`
+  followed by `nn.BCELoss()`. In finite-precision floating-point arithmetic, evaluating
+  `ln(probs)` when probs rounds to 0.0 or 1.0 causes underflow to -inf or NaN.
+  `BCEWithLogitsLoss` combines the sigmoid and BCE into a single numerically stable
+  Log-Sum-Exp formulation: max(z, 0) - z*y + ln(1 + exp(-|z|)).
+
+Change 2: Explicit Gradient Zeroing and Tracking of Initial Loss.
+  Rationale: We ensured that `optimizer.zero_grad()` is called strictly before
+  `loss.backward()` inside every epoch so gradients do not accumulate across
+  full-batch iterations. In addition, we inserted an initial evaluation pass before
+  the training loop to record the untrained initial loss and initial gradient norm
+  as required by the laboratory checkpoint.
+
+
+4. THINK ABOUT IT: STATIC VS. DYNAMIC CODE VERIFICATION
+--------------------------------------------------------------------------------
+Question:
+"An LLM can produce syntactically correct code that implements the wrong
+experiment. Which parts of this laboratory could you verify from the code
+without running it, and which require execution and measurement?"
+
+Answer:
+Parts Verifiable Statically (Code Inspection Without Running):
+- Architectural structure: Input dimension (2), hidden dimension (2), output dimension (1).
+- Presence of nonlinear activation function in hidden layer (checking for non-linear vs affine collapse).
+- Loss criterion selection: Verifying that `nn.BCEWithLogitsLoss` is paired with linear logits.
+- Correct training data: Verifying the 4 input/target tensor pairs match the XOR truth table.
+- Correct optimization primitives: Presence of `optimizer.zero_grad()`, `loss.backward()`, and `optimizer.step()`.
+
+Parts Requiring Dynamic Execution and Measurement:
+- Optimization convergence: Whether gradient descent actually finds a global minimum or
+  gets trapped in a local minimum / plateau.
+- Final empirical accuracy: Whether all 4/4 examples achieve thresholded classification.
+- Gradient magnitudes: Measuring the Frobenius norm ||grad_W L||_2 at step 0 vs step 10 vs final step.
+- Symmetry breaking behavior: Demonstrating that zero-initialization locks weight rows into identity.
+- Comparative activation dynamics: Empirically measuring loss curves and early gradient norms across
+  Sigmoid, Tanh, and ReLU.
+
+
+CHECKPOINT RECORD:
+- Exact LLM prompt recorded.
+- Computational graph inspected (forward, scalar loss, AD, optimizer step).
+- Two justified engineering modifications implemented.
+================================================================================

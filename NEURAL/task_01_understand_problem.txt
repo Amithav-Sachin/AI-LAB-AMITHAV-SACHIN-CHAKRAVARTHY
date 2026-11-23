@@ -1,0 +1,95 @@
+================================================================================
+TASK 1: UNDERSTAND THE PROBLEM BEFORE CODING
+Laboratory - Neural Models: Learning, Depth, Activations, and Output Layers
+================================================================================
+
+1. PROBLEM SPECIFICATION
+--------------------------------------------------------------------------------
+Input Space:
+  X = {0, 1}^2 in R^2 (two redundant binary sensors, x1 and x2)
+
+Output Space:
+  Y = {0, 1} (sensor-disagreement warning indicator y)
+
+Labelled Training Examples (Truth Table):
+  Example 1: x = (0, 0) -> y = 0  [Both sensors inactive: agreement]
+  Example 2: x = (0, 1) -> y = 1  [Sensor 2 active, Sensor 1 inactive: disagreement]
+  Example 3: x = (1, 0) -> y = 1  [Sensor 1 active, Sensor 2 inactive: disagreement]
+  Example 4: x = (1, 1) -> y = 0  [Both sensors active: agreement]
+
+
+2. GEOMETRIC SKETCH & LINEAR INSEPARABILITY
+--------------------------------------------------------------------------------
+Coordinate Representation in the (x1, x2) plane:
+
+       x2
+        ^
+    1.0 |    (0, 1) [Class 1] --------- (1, 1) [Class 0]
+        |          \                      /
+        |           \                    /
+        |            \      (0.5, 0.5)  /
+        |             \        [X]     /
+        |              \              /
+    0.0 |    (0, 0) [Class 0] --------- (1, 0) [Class 1]
+        +---------------------------------------------> x1
+       0.0                         1.0
+
+Why One Straight Decision Boundary Cannot Separate the Two Classes:
+A straight decision boundary in R^2 is defined by the affine hyperplane:
+    H = { (x1, x2) in R^2 : w1*x1 + w2*x2 + b = 0 }
+The points of Class 1 ((0, 1) and (1, 0)) lie on the anti-diagonal, whose convex
+hull is:
+    conv(C1) = { (lambda, 1 - lambda) : lambda in [0, 1] }
+The points of Class 0 ((0, 0) and (1, 1)) lie on the main diagonal, whose convex
+hull is:
+    conv(C0) = { (mu, mu) : mu in [0, 1] }
+
+The two convex hulls intersect at lambda = 0.5, mu = 0.5 -> (0.5, 0.5).
+By Radon's Theorem and the Hyperplane Separation Theorem, two sets in R^d can be
+strictly separated by an affine hyperplane if and only if their convex hulls are
+disjoint:
+    conv(C0) intersect conv(C1) = {(0.5, 0.5)} != empty_set
+Therefore, no single straight line in R^2 can separate the two classes without
+at least one classification error. XOR is fundamentally linearly inseparable.
+
+
+3. PREDICTION: TRAINING A SINGLE AFFINE LAYER + SIGMOID OUTPUT
+--------------------------------------------------------------------------------
+Architecture: y_hat = sigma(w1*x1 + w2*x2 + b)
+Decision rule: y_pred = 1 if y_hat >= 0.5 <=> w1*x1 + w2*x2 + b >= 0.
+
+Prediction:
+Because the decision boundary is strictly linear, the single affine model cannot
+separate the 4 points. When trained using binary cross-entropy, the optimization
+will reach a stationary compromise:
+1. It can classify at most 3 of the 4 points correctly (maximum 75% accuracy); or
+2. The weights will decay towards zero with bias b = 0, predicting y_hat = 0.5 for
+   all four inputs with BCE loss stagnating at -ln(0.5) = ln(2) = 0.693147.
+
+
+4. THINK ABOUT IT: SCIENTIFIC CLAIM ABOUT REPRESENTATION
+--------------------------------------------------------------------------------
+Question:
+"A model can have many parameters and still have the wrong kind of representation.
+What scientific claim about representation does XOR let us test with only four
+data points?"
+
+Answer:
+XOR tests the scientific claim that:
+1. Representational capacity is determined by nonlinearity and geometric folding,
+   NOT by parameter count or linear depth.
+2. An arbitrary stack of affine layers without intervening nonlinear activations
+   collapses into a single affine transformation:
+       W^(L) * (W^(L-1) * ... (W^(1)*x + b^(1)) ... + b^(L-1)) + b^(L) = W_eff * x + b_eff
+   Even if W_eff has millions of parameters across hundreds of linear layers, its
+   decision surface remains a rigid, flat hyperplane.
+3. Therefore, solving XOR tests whether an architecture possesses the capacity
+   to bend, warp, and project the input space into a latent coordinate system
+   where nonlinearly separable patterns become linearly separable.
+
+
+CHECKPOINT RECORD:
+- Problem specification formalized.
+- Inseparability mathematically demonstrated via intersecting convex hulls.
+- Failure of single affine transformation predicted (stagnation at loss 0.6931).
+================================================================================

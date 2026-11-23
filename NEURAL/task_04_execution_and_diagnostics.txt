@@ -1,0 +1,136 @@
+================================================================================
+TASK 4: EXECUTE, TEST, AND DIAGNOSE THE GENERATED CODE
+Laboratory - Neural Models: Learning, Depth, Activations, and Output Layers
+================================================================================
+
+PART A: BASIC LEARNING CHECK (BASELINE 2-2-1 XOR MODEL)
+--------------------------------------------------------------------------------
+Architecture: 2-2-1 network with Sigmoid hidden activation
+Optimizer: Adam (lr = 0.05, epochs = 3000, seed = 42)
+
+Loss Trajectory:
+- Initial BCE Loss: 0.748230
+- Epoch  500: Loss = 0.008669 | Accuracy = 4/4
+- Epoch 1000: Loss = 0.002665 | Accuracy = 4/4
+- Epoch 2000: Loss = 0.000772 | Accuracy = 4/4
+- Final BCE Loss:   0.000340
+
+Four Final Probabilities & Thresholded Predictions:
+- Input (0, 0) [Target 0] -> Prob: 0.000308 | Pred: 0 | [CORRECT]
+- Input (0, 1) [Target 1] -> Prob: 0.999694 | Pred: 1 | [CORRECT]
+- Input (1, 0) [Target 1] -> Prob: 0.999554 | Pred: 1 | [CORRECT]
+- Input (1, 1) [Target 0] -> Prob: 0.000299 | Pred: 0 | [CORRECT]
+Verification: All 4/4 labels are classified correctly with over 99.9% confidence.
+
+
+PART B: BACKPROPAGATION CHECK & GRADIENT INTERPRETATION
+--------------------------------------------------------------------------------
+First-Layer Weight Gradient Tensor (dL/dW^(1)):
+Initial Gradient (Step 0):
+  [[-0.00399953, -0.00442072],
+   [ 0.00639591,  0.00806316]]
+  Frobenius Norm: 0.011894
+
+Final Gradient (Step 3000):
+  [[ 5.1380557e-06, -5.7523216e-06],
+   [ 2.7465214e-06, -3.9361094e-06]]
+  Frobenius Norm: 8.98e-06
+
+What parameter.grad represents in terms of dL/dW^(1):
+By the chain rule of reverse-mode automatic differentiation:
+    dL / dW_ij^(1) = (1/N) * sum_{n=1}^N delta_{n, i}^(1) * x_{n, j}
+where delta_{n, i}^(1) = (dL_n / da_{n, i}^(1)) = (dL_n / dz_n) * W_i^(2) * sigma'(a_{n, i}^(1)).
+
+Why the gradient is the average of example-wise gradients:
+The empirical loss function across the mini-batch is defined as the arithmetic mean:
+    L = (1 / N) * sum_{n=1}^N L_n(y_n, y_hat_n)
+By linearity of the differentiation operator:
+    grad_W L = grad_W [ (1 / N) * sum_{n=1}^N L_n ] = (1 / N) * sum_{n=1}^N grad_W L_n
+Thus, the total gradient tensor populated by PyTorch is the exact arithmetic mean
+of the four individual example gradients.
+
+
+PART C: SYMMETRY EXPERIMENT (ZERO INITIALIZATION)
+--------------------------------------------------------------------------------
+Experimental Setup:
+All weights and biases of the 2-2-1 network initialized to exactly 0.0:
+    fc1.weight = 0, fc1.bias = 0, fc2.weight = 0, fc2.bias = 0.
+Trained with SGD (lr = 0.1) over 100 steps.
+
+Hidden Layer Weight Matrix Tracking (W^(1)):
+Step   | W^(1) Row 1 [w11, w12]    | W^(1) Row 2 [w21, w22]    | Identical? | Loss
+------------------------------------------------------------------------------------
+0      | [0.000000, 0.000000]      | [0.000000, 0.000000]      | True       | 0.693147
+1      | [0.000000, 0.000000]      | [0.000000, 0.000000]      | True       | 0.693147
+2      | [0.000000, 0.000000]      | [0.000000, 0.000000]      | True       | 0.693147
+5      | [0.000000, 0.000000]      | [0.000000, 0.000000]      | True       | 0.693147
+10     | [0.000000, 0.000000]      | [0.000000, 0.000000]      | True       | 0.693147
+50     | [0.000000, 0.000000]      | [0.000000, 0.000000]      | True       | 0.693147
+100    | [0.000000, 0.000000]      | [0.000000, 0.000000]      | True       | 0.693147
+
+Observation & Proof:
+Row 1 and Row 2 remain STRICTLY IDENTICAL across all training steps.
+Scientific Explanation:
+For every input x:
+1. Both hidden units receive identical inputs: a_1^(1) = a_2^(1) = 0.
+2. Both hidden units compute identical activations: h_1 = h_2 = sigma(0) = 0.5.
+3. Both hidden units connect to output with identical zero weights: W_1^(2) = W_2^(2) = 0.
+4. During backward(), both hidden units receive identical error signals:
+       dL/dh_1 = (dL/dz) * W_1^(2) = 0 = (dL/dz) * W_2^(2) = dL/dh_2.
+5. Even when W^(2) updates, both weights receive identical gradients and remain equal.
+6. Consequently, dL/dW_1^(1) == dL/dW_2^(1) throughout all steps.
+The two hidden neurons remain exact clones of each other, reducing the effective
+hidden dimension to 1. Since a 2-1-1 network cannot solve XOR, the network
+remains permanently stuck at loss ln(2) ~= 0.693147, failing to learn XOR.
+
+
+PART D: ACTIVATION EXPERIMENT (SIGMOID vs. TANH vs. RELU)
+--------------------------------------------------------------------------------
+Experimental Setup:
+Identical random initialization (seed = 2), learning rate = 0.05, 2500 epochs.
+
+LAB RESULT TABLE:
+Hidden activation  | Final loss   | 4/4 correct?   | Early ||grad_W(1) L||_2 (step 10)
+--------------------------------------------------------------------------------
+Sigmoid            | 0.000380     | Yes (4/4)      | 0.008495
+Tanh               | 0.000132     | Yes (4/4)      | 0.046584
+ReLU               | 0.000049     | Yes (4/4)      | 0.024614
+--------------------------------------------------------------------------------
+
+Detailed Interpretation:
+1. Early Gradient Norms:
+   - Sigmoid early gradient norm is smallest (0.008495). This directly reflects
+     the maximum derivative bound sigma'(z) <= 0.25, which shrinks the backpropagated
+     gradient by at least a factor of 4 per layer.
+   - Tanh early gradient norm is largest (0.046584). Tanh is zero-centered and has
+     a maximum derivative tanh'(0) = 1.0, preserving gradient strength.
+   - ReLU early gradient norm is robust (0.024614). Units with positive pre-activations
+     transmit gradients with derivative 1.0 without attenuation.
+2. Final Convergence:
+   All three activations successfully separate XOR (4/4 correct) with Adam.
+   ReLU converges to the lowest final loss (4.91e-05), followed by Tanh (1.32e-04),
+   and Sigmoid (3.80e-04). This demonstrates how non-saturating and zero-centered
+   activations accelerate optimization.
+
+
+THINK ABOUT IT: DISTINGUISHING SIGMOID SATURATION FROM DEAD RELU
+--------------------------------------------------------------------------------
+Question:
+"If a sigmoid unit is saturated, its derivative is close to zero. If a ReLU unit is
+negative, its derivative is zero. These are different mechanisms that can both
+produce a small gradient. How would you distinguish them by inspecting activations
+and pre-activations?"
+
+Answer:
+To distinguish them, inspect the pre-activation a = W*x + b and activation h = f(a):
+- Sigmoid Saturation:
+  Examine pre-activation |a|. If |a| >> 0 (e.g., a > 4.0 or a < -4.0), the unit is
+  saturated. The activation h = sigma(a) is extremely close to 1.0 or 0.0, and the
+  derivative sigma'(a) = h*(1-h) is near zero.
+- ReLU Inactivity (Dead ReLU):
+  Examine the sign of pre-activation a. If a < 0, the activation is exactly h = 0.0,
+  and the sub-gradient is identically 0. If a >= 0, the derivative is 1.0.
+Diagnostic Rule:
+If h = 0 and a < 0, the unit is in the dead ReLU regime.
+If |a| is large and h in (0, 0.02) or (0.98, 1.0), the unit is saturated sigmoid.
+================================================================================

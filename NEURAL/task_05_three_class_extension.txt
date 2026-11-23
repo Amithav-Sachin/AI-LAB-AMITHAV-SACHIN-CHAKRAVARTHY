@@ -1,0 +1,145 @@
+================================================================================
+TASK 5: EXTEND THE TASK AND REFLECT ON THE OUTCOME
+Laboratory - Neural Models: Learning, Depth, Activations, and Output Layers
+================================================================================
+
+1. PROBLEM FORMULATION: 3-CLASS SENSOR DECISION
+--------------------------------------------------------------------------------
+Sensor Inputs mapped to 3 mutually exclusive classes:
+  Class 0: Both sensors inactive: (0, 0)
+  Class 1: Sensors disagree:      (0, 1) or (1, 0)
+  Class 2: Both sensors active:   (1, 1)
+
+Architecture:
+  Input (2) -> Hidden Layer (4 units, ReLU) -> 3 Output Logits (z0, z1, z2)
+  Loss Function: Multiclass Categorical Cross-Entropy (nn.CrossEntropyLoss)
+
+
+2. PRE-EXPERIMENTAL PREDICTIONS (BEFORE CODE EXECUTION)
+--------------------------------------------------------------------------------
+Prediction 1: Shape of the Final Weight Matrix W^(2)
+  Answer: W^(2) in R^(3 x d_hidden) = R^(3 x 4).
+  The output projection maps 4 hidden representations to 3 class logits.
+
+Prediction 2: Number of Logits per Example
+  Answer: Exactly 3 logits per example: [z0, z1, z2].
+
+Prediction 3: Why Softmax Probabilities Sum to One
+  Answer: Softmax is defined as:
+      p_k = exp(z_k) / sum_{j=0}^{K-1} exp(z_j)
+  Summing across all K classes:
+      sum_{k=0}^{K-1} p_k = sum_{k=0}^{K-1} [ exp(z_k) / sum_j exp(z_j) ]
+                          = [ sum_{k=0}^{K-1} exp(z_k) ] / [ sum_j exp(z_j) ] = 1.0.
+  Since exp(z_k) > 0 for all real z_k, p_k in (0, 1) and sum p_k = 1.
+
+Prediction 4: Why the Logit Gradient Has the Form p - y
+  Answer:
+  Let categorical cross-entropy loss for one sample be:
+      L = - sum_{j=0}^{K-1} y_j * ln(p_j), where y is a one-hot ground-truth vector.
+  Using the Jacobian of softmax: dp_j / dz_i = p_i * (delta_ij - p_j):
+      dL / dz_i = - sum_{j=0}^{K-1} (y_j / p_j) * (dp_j / dz_i)
+                = - (y_i / p_i) * p_i * (1 - p_i) - sum_{j != i} (y_j / p_j) * (-p_i * p_j)
+                = - y_i * (1 - p_i) + p_i * sum_{j != i} y_j
+  Since y is one-hot, sum_{j != i} y_j = 1 - y_i:
+      dL / dz_i = - y_i + y_i * p_i + p_i * (1 - y_i)
+                = p_i - y_i.
+  In vector notation: grad_z L = p - y.
+
+
+3. EXPERIMENTAL VALIDATION & NUMERICAL RESULTS
+--------------------------------------------------------------------------------
+Trained for 2500 epochs with Adam (lr = 0.05, seed = 42).
+Final Cross-Entropy Loss: 0.000008 | Final Accuracy: 100.0%
+
+Predicted Class Probabilities for all 4 Inputs:
+Input: (0, 0) | Target: 0 (Both Inactive)
+  Logits:        [ 10.2587, -1.4122, -13.6640]
+  Probabilities: [0.999991, 0.000009, 0.000000] | Sum: 0.99999994 | Pred: 0 [CORRECT]
+
+Input: (0, 1) | Target: 1 (Sensors Disagree)
+  Logits:        [-7.1793, 6.6473, -5.7979]
+  Probabilities: [0.000001, 0.999995, 0.000004] | Sum: 1.00000012 | Pred: 1 [CORRECT]
+
+Input: (1, 0) | Target: 1 (Sensors Disagree)
+  Logits:        [-3.2450, 9.0761, -2.7896]
+  Probabilities: [0.000004, 0.999989, 0.000007] | Sum: 1.00000000 | Pred: 1 [CORRECT]
+
+Input: (1, 1) | Target: 2 (Both Active)
+  Logits:        [-15.8882, 3.0058, 14.8385]
+  Probabilities: [0.000000, 0.000007, 0.999993] | Sum: 1.00000000 | Pred: 2 [CORRECT]
+
+Numerical Sum Verification (Input (0, 0)):
+  P(Class 0) = 0.99999142
+  P(Class 1) = 0.00000854
+  P(Class 2) = 0.00000000
+  Sum of Components: 0.9999999404 (strictly 1.0 within float32 precision).
+
+
+4. OPTIONAL DIAGNOSTIC: LOGIT SHIFT INVARIANCE (z + C)
+--------------------------------------------------------------------------------
+Added C = 100 to all logits for Input (0, 0):
+  Raw Logits:            [ 10.258712,  -1.4122201, -13.663985]
+  Shifted Logits (+100): [110.258710,  98.5877760,  86.336010]
+  Softmax(raw):          [9.9999142e-01, 8.5383699e-06, 4.0785045e-11]
+  Softmax(shifted):      [9.9999140e-01, 8.5383290e-06, 4.0784970e-11]
+  Max Absolute Difference: 4.09e-11
+
+Why Softmax is Shift-Invariant:
+    Softmax(z + C)_k = exp(z_k + C) / sum_j exp(z_j + C)
+                     = [exp(C) * exp(z_k)] / [exp(C) * sum_j exp(z_j)]
+                     = exp(z_k) / sum_j exp(z_j) = Softmax(z)_k.
+
+Why Stable Implementations Subtract the Maximum Logit:
+In IEEE 754 float32, exp(z) overflows to +inf for any z > 88.7. If unnormalized logits
+reach ~100, evaluating exp(z) directly results in inf / inf = NaN.
+Subtracting z_max = max_j z_j yields exp(z_k - z_max). Since z_k - z_max <= 0 for all k,
+the largest exponent evaluated is exp(0) = 1.0. This completely eliminates numerical
+overflow while preserving the mathematically exact probability distribution.
+
+
+5. GRADIENT VERIFICATION: ANALYTICAL (p - y)/N vs. AUTOGRAD
+--------------------------------------------------------------------------------
+Analytical Gradient (p - y)/N:
+  [[-2.1457672e-06,  2.1345925e-06,  1.0196261e-11],
+   [ 2.4724289e-07, -1.2218952e-06,  9.8415171e-07],
+   [ 1.1141292e-06, -2.8610229e-06,  1.7567825e-06],
+   [ 1.1311164e-14,  1.8157865e-06, -1.8179417e-06]]
+
+PyTorch Autograd Gradient:
+  [[-2.1457672e-06,  2.1345925e-06,  1.0196271e-11],
+   [ 2.4724292e-07, -1.2218952e-06,  9.8415171e-07],
+   [ 1.1141292e-06, -2.8610229e-06,  1.7567825e-06],
+   [ 1.1311159e-14,  1.8157858e-06, -1.8179417e-06]]
+
+Maximum Absolute Difference: 6.82e-13.
+Conclusion: Analytical gradient grad_z L = p - y matches PyTorch reverse-mode AD to machine precision.
+
+
+6. THINK ABOUT IT: EXTENSION TO MODERN LLM NEXT-TOKEN PREDICTION
+--------------------------------------------------------------------------------
+Question:
+"Next-token prediction in a language model can be viewed as classification over a
+very large vocabulary. Which parts of this tiny three-class experiment stay mathematically
+the same when the number of classes becomes tens of thousands, and which parts of the
+surrounding architecture change dramatically?"
+
+Answer:
+What Stays Mathematically Identical:
+1. The probabilistic formulation: p_k = exp(z_k) / sum_{j=1}^V exp(z_j).
+2. The loss function: Categorical Cross-Entropy L = -ln(p_target).
+3. The logit gradient: grad_z L = p - y (difference between probability vector and one-hot target).
+4. The numerical stabilization trick: Subtracting max logit (Log-Sum-Exp).
+
+What Changes Dramatically in LLM Architecture:
+1. Output Projection Layer Scale:
+   Instead of mapping 4 hidden dimensions to 3 classes (12 parameters), the final unembedding
+   layer maps d_model (e.g. 4096 or 8192) to vocabulary V (e.g. 32,000 to 128,000 tokens),
+   requiring 500M+ parameters and huge memory bandwidth (requiring weight tying or FP8).
+2. Softmax Bottleneck:
+   Computing the denominator sum_{j=1}^V exp(z_j) over 128k classes at every token position
+   creates a severe memory and compute bottleneck, requiring custom CUDA kernels (fused Flash-Cross-Entropy).
+3. Contextual Feature Extraction:
+   Instead of a static 2D vector, the input is a sequence of token embeddings processed
+   by multi-head self-attention with causal masking, rotary positional encodings (RoPE),
+   and deep SwiGLU feed-forward networks across dozens of Transformer layers.
+================================================================================
